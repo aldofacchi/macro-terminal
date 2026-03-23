@@ -320,6 +320,43 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 [data-tip]:hover { border-bottom-color:var(--cyan); color:var(--white); }
 #kpi-tooltip { transition:opacity .1s; }
 
+@media(max-width:700px){
+  .regime-banner .rpill{display:none;}
+  .topbar{padding:4px 8px;}
+  .cpg-logo-img{height:28px;}
+  .tab{padding:6px 10px;font-size:10px;}
+  .bv{font-size:20px;}
+  .card{padding:10px;}
+  .regime-main-name{font-size:22px;}
+  .pmi-num{font-size:24px;}
+  .sc-prob{font-size:20px;}
+  .comm{padding:10px 12px;}
+}
+@media(max-width:480px){
+  .topbar{flex-wrap:wrap;}
+  .topbar-r{font-size:8px;gap:4px;}
+  .settings-btn,.rbtn{font-size:8px;padding:3px 6px;}
+  .tab{padding:5px 8px;font-size:9px;letter-spacing:1px;}
+  .tab .tn{display:none;}
+  .g2,.g3,.g4,.g5{gap:6px;}
+  .card{padding:8px;}
+  .bv{font-size:18px;}
+  .sh h2{font-size:9px;letter-spacing:2px;}
+}
+@media print{
+  body{background:#fff !important;color:#000 !important;}
+  .regime-banner,.topbar,.tabs-wrap,.rbtn,.settings-btn,#refresh-countdown,.footer,.tsrc,button,.tnew,.tbadge,.auto-badge,#fetch-status{display:none !important;}
+  .card{background:#fff !important;border:1px solid #ddd !important;break-inside:avoid;page-break-inside:avoid;}
+  .bv{color:#000 !important;}
+  .ct{color:#333 !important;}
+  .sh h2{color:#000 !important;}
+  .comm{background:#f8f8f8 !important;border-color:#ddd !important;}
+  .comm p,.vl,.dt td,.dt th{color:#333 !important;}
+  .dt th{border-bottom-color:#ccc !important;}
+  svg.sp{filter:contrast(2) !important;}
+  #print-header{display:block !important;}
+}
+
 </style>
 </head>
 <body>
@@ -401,6 +438,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
     </div>
     <span id="refresh-countdown"></span>
     <button class="rbtn" onclick="manualRefresh()">⟳ REFRESH</button>
+    <button class="settings-btn" onclick="(function(){document.getElementById('print-subtitle').textContent=document.querySelector('.tab.active')?.textContent?.trim()+' — '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});window.print()})()">📥 EXPORT</button>
     <button class="settings-btn" onclick="toggleDH()">⊞ DATA</button>
     <button class="settings-btn" onclick="showThemePicker()">◑ THEME</button>
     <button class="settings-btn" onclick="showSettings()">⚙ KEYS</button>
@@ -450,6 +488,12 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div class="tab" data-tab="news"><span class="tn">12</span>NEWS FEED<span class="tnew">LIVE</span></div>
   <div class="tab" data-tab="universities"><span class="tn">13</span>UNIVERSITIES<span class="tnew">LIVE</span></div>
   <div class="tab" data-tab="markets2"><span class="tn">14</span>MSA MARKETS<span class="tnew">LIVE</span></div>
+  <div class="tab" data-tab="compare"><span class="tn">15</span>COMPARE</div>
+</div>
+
+<div id="print-header" style="display:none;padding:20px;border-bottom:2px solid #000;margin-bottom:20px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;letter-spacing:3px">SH MACRO TERMINAL</div>
+  <div style="font-size:11px;color:#666;margin-top:4px" id="print-subtitle"></div>
 </div>
 
 <div class="main">
@@ -469,6 +513,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div class="panel" id="tab-news"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-universities"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-markets2"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
+  <div class="panel" id="tab-compare" style="display:none"></div>
 </div>
 
 <div class="footer">
@@ -1092,6 +1137,14 @@ const UNIS=[
   {name:'Indiana University',city:'Bloomington, IN',enrollment:47000,onBeds:12400,preLY:'-0.8%',rent:740,intl:'8.9%',ret:'89%',endow:'$3.4B',trend:'-1.1%',risk:'MEDIUM',note:'Midwest demographic pressure. Enrollment declining.'},
   {name:'Michigan State',city:'East Lansing, MI',enrollment:50000,onBeds:18000,preLY:'+0.2%',rent:750,intl:'7.6%',ret:'91%',endow:'$4.0B',trend:'+0.4%',risk:'LOW',note:'Large on-campus footprint. Stable modest upside.'},
   {name:'Univ of Wisconsin',city:'Madison, WI',enrollment:49000,onBeds:9700,preLY:'-0.1%',rent:870,intl:'9.3%',ret:'96%',endow:'$3.3B',trend:'-0.2%',risk:'LOW',note:'Premium midwest market. Madison lifestyle premium.'},
+  {name:'University of Alabama',city:'Tuscaloosa, AL',enrollment:38600,onBeds:7200,preLY:'+3.1%',rent:780,intl:'3.2%',ret:'88%',endow:'$1.0B',trend:'+2.8%',risk:'LOW',note:'SEC flagship. Strong football-driven demand cycle. Tuscaloosa undersupplied.'},
+  {name:'Clemson University',city:'Clemson, SC',enrollment:27300,onBeds:6800,preLY:'+2.4%',rent:820,intl:'3.8%',ret:'93%',endow:'$1.0B',trend:'+1.9%',risk:'LOW',note:'Growing Sun Belt university. Limited off-campus supply in small market.'},
+  {name:'Louisiana State Univ',city:'Baton Rouge, LA',enrollment:36900,onBeds:7500,preLY:'+1.6%',rent:760,intl:'4.1%',ret:'85%',endow:'$0.7B',trend:'+0.8%',risk:'MEDIUM',note:'SEC market. Affordable rents but hurricane exposure and flat enrollment.'},
+  {name:'Iowa State University',city:'Ames, IA',enrollment:30700,onBeds:8200,preLY:'-0.5%',rent:690,intl:'8.2%',ret:'87%',endow:'$1.2B',trend:'-1.2%',risk:'MEDIUM',note:'Midwest demographic headwinds. High intl student concentration risk.'},
+  {name:'Purdue University',city:'W Lafayette, IN',enrollment:50900,onBeds:13500,preLY:'+1.8%',rent:780,intl:'14.6%',ret:'92%',endow:'$3.8B',trend:'+2.4%',risk:'LOW',note:'STEM powerhouse. Strong engineering demand. Frozen tuition since 2012.'},
+  {name:'Virginia Tech',city:'Blacksburg, VA',enrollment:38200,onBeds:9800,preLY:'+1.2%',rent:810,intl:'5.8%',ret:'93%',endow:'$1.5B',trend:'+0.6%',risk:'LOW',note:'Engineering-heavy. Small market = supply-constrained. Innovation Campus growth.'},
+  {name:'Univ of Central Florida',city:'Orlando, FL',enrollment:71900,onBeds:6500,preLY:'+3.8%',rent:920,intl:'4.5%',ret:'91%',endow:'$0.4B',trend:'+3.2%',risk:'LOW',note:'2nd largest US university. Massive off-campus demand. Orlando metro growth.'},
+  {name:'Univ of South Carolina',city:'Columbia, SC',enrollment:35500,onBeds:7100,preLY:'+2.1%',rent:790,intl:'3.6%',ret:'90%',endow:'$0.9B',trend:'+1.5%',risk:'LOW',note:'SEC growth market. Columbia affordable. Strong pre-lease velocity.'},
 ];
 const MKTS=[
   {city:'Gainesville, FL',univ:'UF',vacancy:3.2,rentG:5.8,newSup:1.2,rent:850,cap:5.1,jobG:2.8,pre:'+2.3%',sig:'BULL',score:82},
@@ -1106,6 +1159,14 @@ const MKTS=[
   {city:'Bloomington, IN',univ:'Indiana U',vacancy:5.6,rentG:1.8,newSup:0.8,rent:740,cap:5.8,jobG:0.6,pre:'-0.8%',sig:'CAUTION',score:54},
   {city:'East Lansing, MI',univ:'Michigan St',vacancy:4.2,rentG:2.9,newSup:0.6,rent:750,cap:5.5,jobG:1.1,pre:'+0.2%',sig:'NEUTRAL',score:62},
   {city:'Madison, WI',univ:'U Wisconsin',vacancy:3.8,rentG:3.4,newSup:1.0,rent:870,cap:5.1,jobG:2.1,pre:'-0.1%',sig:'NEUTRAL',score:66},
+  {city:'Tuscaloosa, AL',univ:'Alabama',vacancy:3.6,rentG:5.4,newSup:1.5,rent:780,cap:5.4,jobG:2.2,pre:'+3.1%',sig:'BULL',score:77},
+  {city:'Clemson, SC',univ:'Clemson',vacancy:3.1,rentG:4.8,newSup:0.7,rent:820,cap:5.3,jobG:1.9,pre:'+2.4%',sig:'BULL',score:80},
+  {city:'Baton Rouge, LA',univ:'LSU',vacancy:5.1,rentG:2.8,newSup:1.9,rent:760,cap:5.7,jobG:1.4,pre:'+1.6%',sig:'NEUTRAL',score:58},
+  {city:'Ames, IA',univ:'Iowa State',vacancy:4.8,rentG:1.5,newSup:0.5,rent:690,cap:6.0,jobG:0.8,pre:'-0.5%',sig:'CAUTION',score:50},
+  {city:'W Lafayette, IN',univ:'Purdue',vacancy:3.4,rentG:4.2,newSup:1.2,rent:780,cap:5.3,jobG:2.5,pre:'+1.8%',sig:'BULL',score:75},
+  {city:'Blacksburg, VA',univ:'Virginia Tech',vacancy:2.8,rentG:3.6,newSup:0.4,rent:810,cap:5.2,jobG:1.6,pre:'+1.2%',sig:'BULL',score:73},
+  {city:'Orlando, FL',univ:'UCF',vacancy:4.5,rentG:5.8,newSup:3.2,rent:920,cap:4.8,jobG:3.8,pre:'+3.8%',sig:'BULL',score:72},
+  {city:'Columbia, SC',univ:'U South Carolina',vacancy:4.0,rentG:4.1,newSup:1.4,rent:790,cap:5.4,jobG:2.0,pre:'+2.1%',sig:'BULL',score:71},
 ];
 
 
@@ -1140,6 +1201,14 @@ const UNI_IDS = {
   'Indiana University':       151351,
   'Michigan State':           171100,
   'Univ of Wisconsin':        240444,
+  'University of Alabama':     100751,
+  'Clemson University':        217882,
+  'Louisiana State Univ':      159391,
+  'Iowa State University':     153603,
+  'Purdue University':         153658,
+  'Virginia Tech':             233921,
+  'Univ of Central Florida':   132903,
+  'Univ of South Carolina':    218663,
 };
 
 // MSA FIPS codes for Census ACS
@@ -1156,6 +1225,14 @@ const MSA_CODES = {
   'Bloomington, IN':    '14020',
   'East Lansing, MI':   '29620',
   'Madison, WI':        '31540',
+  'Tuscaloosa, AL':     '46220',
+  'Clemson, SC':        '24860',
+  'Baton Rouge, LA':    '12940',
+  'Ames, IA':           '11180',
+  'W Lafayette, IN':    '29200',
+  'Blacksburg, VA':     '13980',
+  'Orlando, FL':        '36740',
+  'Columbia, SC':       '17900',
 };
 
 // BLS series for supplementing FRED
@@ -1393,6 +1470,14 @@ const ZILLOW_MARKETS = {
   'Bloomington, IN':    'Bloomington, IN',
   'East Lansing, MI':   'Lansing-East Lansing, MI',
   'Madison, WI':        'Madison, WI',
+  'Tuscaloosa, AL':     'Tuscaloosa, AL',
+  'Clemson, SC':        'Greenville-Anderson, SC',
+  'Baton Rouge, LA':    'Baton Rouge, LA',
+  'Ames, IA':           'Ames, IA',
+  'W Lafayette, IN':    'Lafayette-West Lafayette, IN',
+  'Blacksburg, VA':     'Blacksburg-Christiansburg, VA',
+  'Orlando, FL':        'Orlando-Kissimmee-Sanford, FL',
+  'Columbia, SC':       'Columbia, SC',
 };
 
 let ZORI_DATA   = {};  // { 'Gainesville, FL': [{date, value}, ...] }
@@ -2726,6 +2811,7 @@ function renderMarkets2() {
         <div class="mc-row"><span class="mc-rl">SH Market Score</span><span style="color:${mkt?scC(mkt.score):'var(--muted2)'}">${mkt?mkt.score+'/100':'--'}</span></div>
         <div class="mc-row"><span class="mc-rl">Vacancy Rate</span><span style="color:${mkt&&mkt.vacancy<5?'var(--green)':'var(--yellow)'}">${mkt?mkt.vacancy+'%':'--'}</span></div>
         <div class="mc-row"><span class="mc-rl">Rent Growth YOY</span><span style="color:var(--green)">${mkt?'+'+mkt.rentG+'%':'--'}</span></div>
+        <div class="mc-row"><span class="mc-rl">Zillow ZORI</span><span style="color:var(--cyan)">${ZORI_DATA&&ZORI_DATA[city]&&ZORI_DATA[city][0]?'$'+Math.round(ZORI_DATA[city][0].value):'--'}</span></div>
       </div>`}
       <div style="height:2px;background:var(--border);border-radius:1px;margin-top:8px;overflow:hidden">
         <div style="height:100%;width:${mkt?mkt.score:0}%;background:${mkt?scC(mkt.score):'var(--muted)'};border-radius:1px"></div>
@@ -2750,6 +2836,54 @@ function renderMarkets2() {
     <div class="g3">${mktRows}</div>`;
 }
 
+function renderCompare() {
+  const el = document.getElementById('tab-compare');
+  if (!el) return;
+  const selOpts = UNIS.map((u,i) => '<option value="'+i+'">'+esc(u.name)+' — '+esc(u.city)+'</option>').join('');
+
+  function buildComp(idx) {
+    const u = UNIS[idx]; const m = MKTS[idx];
+    if (!u || !m) return '<div class="card" style="text-align:center;padding:40px;color:var(--muted2)">Select a market</div>';
+    const unitid = UNI_IDS[u.name]; const sc = SCORECARD_DATA[unitid] || {};
+    return '<div class="card">'
+      +'<div class="mc-name">'+esc(u.name)+'</div>'
+      +'<div class="mc-sub" style="margin-bottom:10px">'+esc(u.city)+'</div>'
+      +'<table class="dt"><tbody>'
+      +[['Enrollment',(u.enrollment/1000).toFixed(0)+'K'],['On-Campus Beds',(u.onBeds/1000).toFixed(1)+'K'],
+        ['Vacancy',m.vacancy+'%'],['Rent Growth','+'+m.rentG+'%'],['Avg Rent/Bed','$'+u.rent],
+        ['Cap Rate',m.cap+'%'],['New Supply',m.newSup+'%'],['Job Growth',m.jobG+'%'],
+        ['Pre-Lease LY',u.preLY],['Market Score',m.score+'/100'],
+        ['Retention',u.ret],['Intl Students',u.intl],['Risk',u.risk],
+        ['Endowment',u.endow],['Enroll Trend',u.trend],
+        ['Grad Rate',sc.gradRate?Math.round(sc.gradRate*100)+'%':'--'],
+        ['Median Earnings 6yr',sc.earn6yr?'$'+(sc.earn6yr/1000).toFixed(0)+'K':'--'],
+      ].map(([l,v])=>'<tr><td>'+l+'</td><td class="tdw">'+v+'</td></tr>').join('')
+      +'</tbody></table>'
+      +'<div style="margin-top:8px;font-size:9px;color:var(--muted2)">'+esc(u.note)+'</div>'
+      +'</div>';
+  }
+
+  const s1 = window._compSel1 ?? 0;
+  const s2 = window._compSel2 ?? 1;
+
+  el.innerHTML = `
+    ${sh('MARKET COMPARISON','SELECT TWO MARKETS')}
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <select style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:4px;font-family:var(--mono);font-size:11px"
+        onchange="window._compSel1=+this.value;renderCompare()">
+        ${selOpts.replace('value="'+s1+'"','value="'+s1+'" selected')}
+      </select>
+      <span style="color:var(--muted2);align-self:center;font-size:12px">VS</span>
+      <select style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:4px;font-family:var(--mono);font-size:11px"
+        onchange="window._compSel2=+this.value;renderCompare()">
+        ${selOpts.replace('value="'+s2+'"','value="'+s2+'" selected')}
+      </select>
+    </div>
+    <div class="g2">
+      ${buildComp(s1)}
+      ${buildComp(s2)}
+    </div>`;
+}
 
 
 // ── STATE ──
@@ -3084,6 +3218,7 @@ function reRenderAll() {
   DONE[ACTIVE_TAB] = true;
   renderTab(ACTIVE_TAB);
   updateRegimeBanner(computeRegime());
+  saveRegimeSnapshot();
 }
 
 // ── TOAST ──
@@ -3125,7 +3260,7 @@ function renderTab(name) {
     housing:renderHousing, student:renderStudent, markets:renderMarkets,
     scenarios:renderScenarios, underwrite:renderUnderwrite, signals:renderSignals,
     news:renderNews, universities:renderUniversities, markets2:renderMarkets2,
-    realtime:renderRealtime,
+    realtime:renderRealtime, compare:renderCompare,
   };
   if (map[name]) map[name]();
 }
@@ -3551,6 +3686,7 @@ async function startTerminal() {
 
   // Update regime banner (visible on all tabs)
   updateRegimeBanner(computeRegime());
+  saveRegimeSnapshot();
 
   // Render the currently active tab
   const activeTab = document.querySelector('.tab.active');
@@ -3810,10 +3946,28 @@ function computeRegime() {
     else if(t10r&&t2r&&!steep)ycR='BEAR FLATTENER';
   }
 
-  return {regime,color,reImpl,G,I,L,gUp,iHigh,lEasy,ycR,cpce,
+  const composite = Math.round((G+(100-I)+L)/3);
+  return {regime,color,reImpl,G,I,L,gUp,iHigh,lEasy,ycR,cpce,composite,
     gLbl:gUp?'ACCELERATING':'DECELERATING',
     iLbl:iHigh?'ELEVATED':'CONTAINED',
     lLbl:lEasy?'EASING':'TIGHTENING'};
+}
+
+function saveRegimeSnapshot() {
+  try {
+    const hist = JSON.parse(localStorage.getItem('shmacro_regime_history') || '[]');
+    const today = new Date().toISOString().split('T')[0];
+    const R = computeRegime();
+    // Only store one entry per day
+    if (hist.length && hist[hist.length-1].date === today) {
+      hist[hist.length-1] = { date: today, regime: R.regime, growth: R.G, inflation: R.I, liquidity: R.L, score: R.composite };
+    } else {
+      hist.push({ date: today, regime: R.regime, growth: R.G, inflation: R.I, liquidity: R.L, score: R.composite });
+    }
+    // Keep last 90 days
+    while (hist.length > 90) hist.shift();
+    localStorage.setItem('shmacro_regime_history', JSON.stringify(hist));
+  } catch(e) {}
 }
 
 function updateRegimeBanner(R) {
@@ -4046,7 +4200,39 @@ function renderRegime() {
     <div class="comm oran">
       <div class="ct2">▸ HOW TO USE THE REGIME ENGINE</div>
       <p>Current: <strong style="color:${cg}">${R.regime}</strong> · YC: <strong>${R.ycR}</strong>. ${R.reImpl} All three G/I/L dimensions must align for high-conviction deployment. Misaligned signals = reduce sizing, demand better pricing, shorten hold periods. The Copper/Gold ratio and TIPS breakevens are your cross-validation tools.</p>
-    </div>`;
+    </div>
+    ${(()=>{
+      const regimeHist = JSON.parse(localStorage.getItem('shmacro_regime_history') || '[]');
+      if (regimeHist.length <= 1) return '';
+      return sh('REGIME HISTORY','DAILY SNAPSHOTS · STORED LOCALLY')
+      + '<div class="card">'
+      + '<div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>MACRO REGIME TIMELINE</div><span class="freshness fresh">'+regimeHist.length+' days</span></div>'
+      + '<div style="display:flex;gap:1px;height:32px;margin:8px 0;border-radius:3px;overflow:hidden">'
+      + regimeHist.map(h => {
+          const c = h.regime==='GOLDILOCKS'?'var(--goldilocks)':h.regime==='REFLATION'?'var(--reflation)':h.regime==='STAGFLATION'?'var(--stagflation)':'var(--deflation)';
+          return '<div title="'+h.date+': '+h.regime+' ('+h.score+')" style="flex:1;background:'+c+';opacity:0.7;cursor:help"></div>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted2)">'
+      + '<span>'+(regimeHist[0]?.date||'')+'</span>'
+      + '<span>'+(regimeHist[regimeHist.length-1]?.date||'')+'</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:12px;margin-top:8px;font-size:9px">'
+      + '<span style="color:var(--goldilocks)">■ Goldilocks</span>'
+      + '<span style="color:var(--reflation)">■ Reflation</span>'
+      + '<span style="color:var(--stagflation)">■ Stagflation</span>'
+      + '<span style="color:var(--deflation)">■ Disinflation</span>'
+      + '</div>'
+      + '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:9px">'
+      + ['GOLDILOCKS','REFLATION','STAGFLATION','DISINFLATION'].map(r => {
+          const count = regimeHist.filter(h => h.regime === r).length;
+          const pct = Math.round(count / regimeHist.length * 100);
+          const c = r==='GOLDILOCKS'?'var(--goldilocks)':r==='REFLATION'?'var(--reflation)':r==='STAGFLATION'?'var(--stagflation)':'var(--deflation)';
+          return '<div style="text-align:center"><div style="color:'+c+';font-weight:700">'+pct+'%</div><div style="color:var(--muted2)">'+r.substring(0,4)+'</div></div>';
+        }).join('')
+      + '</div>'
+      + '</div>';
+    })()}`;
 }
 
 // ── TAB: OVERVIEW ──
