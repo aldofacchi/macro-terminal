@@ -1537,6 +1537,7 @@ const YAHOO_ONLY_SYMBOLS = {
   T5Y_RT:   '^FVX',        // 5Y Treasury yield
   T30Y_RT:  '^TYX',        // 30Y Treasury yield
   MOVE_RT:  '^MOVE',       // MOVE Index — no Finnhub equivalent
+  GOLD_RT:  'GC=F',        // Gold futures (actual $/oz — Finnhub GLD ETF is $404, not $4400)
   // Fed Funds futures for FedWatch computation
   ZQ_MAR: YAHOO_SYMBOLS.ZQ_MAR,
   ZQ_JUN: YAHOO_SYMBOLS.ZQ_JUN,
@@ -1547,7 +1548,7 @@ const YAHOO_ONLY_SYMBOLS = {
 // Finnhub REST quote symbols — ETF proxies for direct (no CORS proxy) fetching
 const FINNHUB_QUOTE_SYMBOLS = {
   SPY:  'SP500_RT',   // S&P 500 proxy
-  GLD:  'GOLD_RT',    // Gold proxy
+  GLD:  'GOLD_ETF_RT',// Gold ETF (not commodity price — use Yahoo GC=F for actual gold/oz)
   USO:  'OIL_RT',     // Oil proxy
   CPER: 'COPPER_RT',  // Copper proxy
   UUP:  'DXY_RT',     // Dollar Index proxy
@@ -3279,7 +3280,7 @@ function scheduleFinnhubQuotes() {
 // Same symbols as FINNHUB_QUOTE_SYMBOLS for consistency
 const FINNHUB_WS_SYMBOLS = {
   'SPY':      'SP500_RT',  // S&P 500 proxy
-  'GLD':      'GOLD_RT',   // Gold proxy
+  'GLD':      'GOLD_ETF_RT',// Gold ETF (not commodity price)
   'USO':      'OIL_RT',    // Oil proxy
   'CPER':     'COPPER_RT', // Copper ETF
   'UUP':      'DXY_RT',    // Dollar Index proxy
