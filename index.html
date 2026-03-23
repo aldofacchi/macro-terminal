@@ -1417,43 +1417,50 @@ async function fetchCensus() {
 
   for (const [city, fips] of Object.entries(MSA_CODES)) {
     try {
-      let url = `${CENSUS_BASE}${year}/acs/acs1?get=${vars}&for=metropolitan+statistical+area/micropolitan+statistical+area:${fips}`;
-      if (EXT_KEYS.CENSUS) url += `&key=${EXT_KEYS.CENSUS}`;
-      // Census API may block browser CORS on GitHub Pages — use proxy cascade
+      const baseUrl = `${CENSUS_BASE}${year}/acs/acs1?get=${vars}&for=metropolitan+statistical+area/micropolitan+statistical+area:${fips}`;
+      // Try with key first, then without key as fallback (key may be invalid/expired)
+      const urlsToTry = EXT_KEYS.CENSUS
+        ? [baseUrl + `&key=${EXT_KEYS.CENSUS}`, baseUrl]
+        : [baseUrl];
+
       let rows = null;
 
-      // Attempt 1: direct (works when Census sends CORS headers)
-      try {
-        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (r.ok) {
-          const text = await r.text();
-          if (text.trim().startsWith('[')) rows = JSON.parse(text);
-        }
-      } catch(_) { /* CORS blocked — expected on GitHub Pages */ }
+      for (const url of urlsToTry) {
+        if (rows) break;
 
-      // Attempt 2-4: proxy cascade (same pattern as FRED fetcher)
-      if (!rows) {
-        const proxies = [
-          { url: 'https://corsproxy.io/?' + encodeURIComponent(url), wrapped: false },
-          { url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(url), wrapped: true },
-          { url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), wrapped: false },
-        ];
-        for (const proxy of proxies) {
-          if (rows) break;
-          try {
-            const pr = await fetch(proxy.url, { signal: AbortSignal.timeout(10000) });
-            if (!pr.ok) continue;
-            if (proxy.wrapped) {
-              const pw = await pr.json();
-              const contents = pw.contents || '';
-              if (!contents.trim().startsWith('[')) continue; // HTML error page — skip
-              rows = JSON.parse(contents);
-            } else {
-              const text = await pr.text();
-              if (!text.trim().startsWith('[')) continue; // HTML error page — skip
-              rows = JSON.parse(text);
-            }
-          } catch(_) { continue; }
+        // Attempt 1: direct (works when Census sends CORS headers)
+        try {
+          const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+          if (r.ok) {
+            const text = await r.text();
+            if (text.trim().startsWith('[')) rows = JSON.parse(text);
+          }
+        } catch(_) { /* CORS blocked or key rejected */ }
+
+        // Attempt 2-4: proxy cascade
+        if (!rows) {
+          const proxies = [
+            { url: 'https://corsproxy.io/?' + encodeURIComponent(url), wrapped: false },
+            { url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(url), wrapped: true },
+            { url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), wrapped: false },
+          ];
+          for (const proxy of proxies) {
+            if (rows) break;
+            try {
+              const pr = await fetch(proxy.url, { signal: AbortSignal.timeout(10000) });
+              if (!pr.ok) continue;
+              if (proxy.wrapped) {
+                const pw = await pr.json();
+                const contents = pw.contents || '';
+                if (!contents.trim().startsWith('[')) continue;
+                rows = JSON.parse(contents);
+              } else {
+                const text = await pr.text();
+                if (!text.trim().startsWith('[')) continue;
+                rows = JSON.parse(text);
+              }
+            } catch(_) { continue; }
+          }
         }
       }
 
