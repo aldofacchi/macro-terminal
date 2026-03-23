@@ -116,6 +116,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .freshness.fresh{color:var(--green2);}
 .freshness.stale{color:var(--yellow);}
 .freshness.old{color:var(--red);}
+.freshness.live{color:var(--green);font-weight:700;animation:livePulse 2s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.5}}
 .bv{font-size:24px;font-weight:700;color:var(--white);line-height:1;margin-bottom:3px;font-family:'Share Tech Mono',monospace;}
 .bv.pos{color:var(--green);}.bv.neg{color:var(--red);}.bv.warn{color:var(--yellow);}.bv.info{color:var(--blue);}.bv.purp{color:var(--purple);}.bv.oran{color:var(--orange);}
 .vc{font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:4px;}
@@ -1525,8 +1527,33 @@ const YAHOO_SYMBOLS = {
   ZQ_DEC: 'ZQZ'+String(new Date().getFullYear()).slice(-2)+'.CBT',
 };
 
+// Yahoo-only symbols — used when Finnhub covers the rest via REST/WS
+// These are symbols Finnhub cannot provide: actual yield %, MOVE index, ZQ futures
+const YAHOO_ONLY_SYMBOLS = {
+  T10Y_RT:  '^TNX',        // 10Y Treasury yield (actual %)
+  T3M_RT:   '^IRX',        // 13-week T-bill yield
+  T5Y_RT:   '^FVX',        // 5Y Treasury yield
+  T30Y_RT:  '^TYX',        // 30Y Treasury yield
+  MOVE_RT:  '^MOVE',       // MOVE Index — no Finnhub equivalent
+  // Fed Funds futures for FedWatch computation
+  ZQ_MAR: YAHOO_SYMBOLS.ZQ_MAR,
+  ZQ_JUN: YAHOO_SYMBOLS.ZQ_JUN,
+  ZQ_SEP: YAHOO_SYMBOLS.ZQ_SEP,
+  ZQ_DEC: YAHOO_SYMBOLS.ZQ_DEC,
+};
+
+// Finnhub REST quote symbols — ETF proxies for direct (no CORS proxy) fetching
+const FINNHUB_QUOTE_SYMBOLS = {
+  SPY:  'SP500_RT',   // S&P 500 proxy
+  GLD:  'GOLD_RT',    // Gold proxy
+  USO:  'OIL_RT',     // Oil proxy
+  CPER: 'COPPER_RT',  // Copper proxy
+  UUP:  'DXY_RT',     // Dollar Index proxy
+  VIXY: 'VIX_RT',     // VIX proxy
+};
+
 // Real-time data store
-let RT = {};           // {key: {price, change, changePct, prevClose, high, low, timestamp}}
+let RT = {};           // {key: {price, change, changePct, prevClose, high, low, timestamp, _source}}
 let RT_LOADED  = false;
 let RT_LOADING = false;
 let RT_LAST_UPDATE = null;
@@ -1566,7 +1593,8 @@ async function fetchYahooFallback(missing) {
           prevClose: parseFloat(prevClose.toFixed(4)),
           high:      meta.regularMarketDayHigh || price,
           low:       meta.regularMarketDayLow  || price,
-          timestamp: new Date(meta.regularMarketTime * 1000).toISOString(),
+          timestamp: Date.now(),
+          _source:   'yahoo',
           symbol:    sym,
           _v8: true,  // mark as v8 fallback
         };
@@ -1578,9 +1606,11 @@ async function fetchYahooFallback(missing) {
 }
 
 async function fetchYahooAll() {
-  // Yahoo v7 batch quote endpoint is deprecated/blocked.
-  // Use v8/chart per-symbol with parallel requests via CORS proxies.
-  const entries = Object.entries(YAHOO_SYMBOLS);
+  // When Finnhub covers intermarket symbols, only fetch Yahoo-exclusive ones (yields, MOVE, ZQ)
+  // Without Finnhub key, fetch everything via Yahoo (graceful fallback)
+  const entries = EXT_KEYS.FINNHUB
+    ? Object.entries(YAHOO_ONLY_SYMBOLS)
+    : Object.entries(YAHOO_SYMBOLS);
   const BATCH = 4; // fetch 4 symbols at a time to avoid proxy rate limits
   let anySuccess = false;
 
@@ -1616,7 +1646,8 @@ async function fetchYahooAll() {
               prevClose: parseFloat((prevClose||0).toFixed(4)),
               high:      meta.regularMarketDayHigh || price,
               low:       meta.regularMarketDayLow  || price,
-              timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date(),
+              timestamp: Date.now(), // Use fetch time, not exchange trade time (avoids stale "55m ago" after close)
+              _source:   'yahoo',
               symbol:    sym,
             };
             return true;
@@ -1626,7 +1657,7 @@ async function fetchYahooAll() {
       })();
     }));
     results.forEach(r => { if (r.status === 'fulfilled' && r.value) anySuccess = true; });
-    if (i + BATCH < entries.length) await sleep(100);
+    if (i + BATCH < entries.length) await sleep(50);
   }
   if (anySuccess) console.log('Yahoo RT loaded:', Object.keys(RT).length, 'symbols');
   return anySuccess;
@@ -1655,6 +1686,9 @@ async function fetchAllRealtime() {
   if (RT_LOADING) return;
   RT_LOADING = true;
   try {
+    // Tier 2: Finnhub REST (fast, no proxy — completes in <1s)
+    if (EXT_KEYS.FINNHUB) await fetchFinnhubQuotes();
+    // Tier 3: Yahoo for yields/MOVE/ZQ (slower, via CORS proxy)
     await fetchYahooAll();
   } finally {
     RT_LOADED = true;
@@ -1837,10 +1871,26 @@ async function fetchFedWatch() {
 function rtVal(key)    { return RT[key]?.price ?? null; }
 function rtChg(key)    { return RT[key]?.change ?? null; }
 function rtChgPct(key) { return RT[key]?.changePct ?? null; }
-function rtAge(key)    { 
-  if (!RT[key]?.timestamp) return null;
-  const mins = Math.floor((Date.now() - RT[key].timestamp) / 60000);
-  return mins < 60 ? mins+'m ago' : Math.floor(mins/60)+'h ago';
+function rtAge(key) {
+  if (!RT[key]) return null;
+  const src = RT[key]._source;
+  const ts  = RT[key].timestamp;
+  // Tier 1: WebSocket — sub-second streaming
+  if (src === 'ws') {
+    if (!ts) return '◉ LIVE';
+    const secAgo = Math.floor((Date.now() - ts) / 1000);
+    return secAgo < 10 ? '◉ LIVE' : secAgo + 's';
+  }
+  // Tier 2: Finnhub REST — 15s polling
+  if (src === 'finnhub_rest' && ts) {
+    const secAgo = Math.floor((Date.now() - ts) / 1000);
+    if (secAgo < 20) return secAgo + 's';
+    return Math.floor(secAgo / 60) + 'm';
+  }
+  // Tier 3: Yahoo / default
+  if (!ts) return null;
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  return mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h';
 }
 
 // Show RT values in the regime banner pills
@@ -1901,6 +1951,55 @@ async function fetchFinnhubCalendar() {
   } catch(e) {
     console.warn('Finnhub calendar failed:', e.message);
   }
+}
+
+// ════════════════════════════════════════════════════
+// FINNHUB REST /quote — TIER 2 FAST POLLING (15s)
+// Direct fetch, no CORS proxy needed (Finnhub has native CORS)
+// 6 ETF symbols × 4 polls/min = 24 calls/min (within 60/min free limit)
+// ════════════════════════════════════════════════════
+async function fetchFinnhubQuotes() {
+  const key = EXT_KEYS.FINNHUB;
+  if (!key) return 0;
+  const entries = Object.entries(FINNHUB_QUOTE_SYMBOLS);
+  let successCount = 0;
+
+  const results = await Promise.allSettled(entries.map(([sym, rtKey]) =>
+    (async () => {
+      try {
+        const resp = await fetch(
+          `${FINNHUB_BASE}/quote?symbol=${sym}&token=${key}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (!resp.ok) return false;
+        const j = await resp.json();
+        if (!j.c || j.c === 0) return false; // No price data
+        // Don't overwrite fresh WS data (WS takes priority)
+        if (RT[rtKey]?._source === 'ws' && RT[rtKey]?.timestamp &&
+            (Date.now() - RT[rtKey].timestamp) < 30000) return true; // WS is fresh, skip
+        RT[rtKey] = {
+          price:     j.c,
+          change:    j.d || 0,
+          changePct: j.dp || 0,
+          prevClose: j.pc || j.c,
+          high:      j.h || j.c,
+          low:       j.l || j.c,
+          timestamp: Date.now(),
+          _source:   'finnhub_rest',
+          symbol:    sym,
+        };
+        return true;
+      } catch(e) { return false; }
+    })()
+  ));
+
+  results.forEach(r => { if (r.status === 'fulfilled' && r.value) successCount++; });
+  if (successCount > 0) {
+    RT_LOADED = true;
+    if (DONE['realtime']) renderRealtime();
+    updateRTBanner();
+  }
+  return successCount;
 }
 
 // Hardcoded upcoming key release dates as fallback (updated quarterly)
@@ -1972,10 +2071,11 @@ function renderRealtime() {
     }
     const chgColor = isYield||isMOVE||isVIX ? (isPos?'var(--red)':'var(--green)') : (isPos?'var(--green)':'var(--red)');
     const age = isFredFallback ? 'FRED' : (rtAge(key) || '--');
+    const freshClass = RT[key]?._source === 'ws' ? 'freshness live' : 'freshness fresh';
     return `<div class="card">
       <div class="ct">
         <div class="ct-left"><span class="cdot" style="background:${chgColor}"></span>${label}</div>
-        <span class="freshness fresh">${age}</span>
+        <span class="${freshClass}">${age}</span>
       </div>
       <div class="bv ${bvClass}">${price}${unit}</div>
       <div class="vc">
@@ -2006,12 +2106,24 @@ function renderRealtime() {
   // Calendar section
   const calHtml = buildCalendarHtml();
 
+  const _hasFinnhub = !!EXT_KEYS.FINNHUB;
+  const _wsConnected = _finnhubWS && _finnhubWS.readyState === 1;
+  const _sourceLabel = _hasFinnhub
+    ? (_wsConnected ? 'FINNHUB WS + REST · YAHOO YIELDS' : 'FINNHUB REST · YAHOO YIELDS')
+    : 'YAHOO FINANCE';
+  const _statusText = _wsConnected
+    ? '◉ STREAMING ' + (RT_LAST_UPDATE?.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})||'')
+    : RT_LOADED
+      ? '● LIVE ' + (RT_LAST_UPDATE?.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})||'')
+      : RT_LOADING ? '⟳ FETCHING RT DATA...' : '● RT UNAVAILABLE — SHOWING FRED';
+  const _statusColor = _wsConnected ? 'var(--green)' : RT_LOADED ? 'var(--green)' : RT_LOADING ? 'var(--yellow)' : 'var(--red)';
+
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="sh" style="flex:1;margin:0"><h2>REAL-TIME MARKET PRICES // YAHOO FINANCE</h2></div>
+      <div class="sh" style="flex:1;margin:0"><h2>REAL-TIME MARKET PRICES // ${esc(_sourceLabel)}</h2></div>
       <div style="display:flex;gap:8px;align-items:center;font-size:9px">
-        <span style="color:${RT_LOADED?'var(--green)':RT_LOADING?'var(--yellow)':'var(--red)'}">
-          ${RT_LOADED ? '● LIVE ' + (RT_LAST_UPDATE?.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})||'') : RT_LOADING ? '⟳ FETCHING RT DATA...' : '● RT UNAVAILABLE — SHOWING FRED'}
+        <span style="color:${_statusColor}">
+          ${_statusText}
         </span>
         <span style="color:var(--muted2)">${isMarketOpen?'MARKET OPEN':'MARKET CLOSED'}</span>
         <button class="rbtn" onclick="fetchAllRealtime().then(()=>renderRealtime())">⟳ REFRESH</button>
@@ -2053,7 +2165,7 @@ function renderRealtime() {
     ${sh('ECONOMIC RELEASE CALENDAR','UPCOMING KEY DATES')}
     ${calHtml}
     <div style="font-size:8px;color:var(--muted);margin-top:10px">
-      Real-time prices: Yahoo Finance (15-min delay) · Calendar: ${CALENDAR_LOADED ? 'Finnhub live' : 'Approximate schedule — add Finnhub key for exact dates'} · Last update: ${RT_LAST_UPDATE?.toLocaleTimeString()||'--'}
+      ${_hasFinnhub ? 'Streaming: Finnhub WS (sub-second) · Polling: Finnhub REST (15s) · Yields/MOVE: Yahoo (60s)' : 'Real-time prices: Yahoo Finance (15-min delay)'} · Calendar: ${CALENDAR_LOADED ? 'Finnhub live' : 'Approximate schedule — add Finnhub key for exact dates'} · Last update: ${RT_LAST_UPDATE?.toLocaleTimeString()||'--'}
     </div>`;
 }
 
@@ -3057,11 +3169,11 @@ function positionTip(ev, tip) {
 
 
 
-// ── SMART RT REFRESH — market-hours aware ──
-// Market hours: Mon–Fri 9:30am–4:00pm ET
-// During open:  refresh every 2 minutes
-// After close:  refresh every 15 minutes (prices don't change)
-// FRED data:    refreshes every 60 minutes (daily data, never intraday)
+// ── SMART RT REFRESH — market-hours aware, 3-tier architecture ──
+// Tier 1: Finnhub WS — sub-second streaming (SPY, GLD, USO, CPER, UUP, VIXY)
+// Tier 2: Finnhub REST /quote — 15s polling (same 6 ETF proxies)
+// Tier 3: Yahoo v8/chart — 60s yields/MOVE/ZQ (1min w/ Finnhub, 2min without)
+// FRED data: refreshes every 60 minutes (daily data, never intraday)
 
 function isMarketHours() {
   const now = new Date();
@@ -3077,6 +3189,8 @@ function isMarketHours() {
 }
 
 function getRTIntervalMs() {
+  // When Finnhub covers intermarket symbols, Yahoo only needs to refresh yields (slower-moving)
+  if (EXT_KEYS.FINNHUB) return isMarketHours() ? 60 * 1000 : 15 * 60 * 1000;
   return isMarketHours() ? 2 * 60 * 1000 : 15 * 60 * 1000;
 }
 
@@ -3103,16 +3217,17 @@ function scheduleRTRefresh() {
     fetchAllRealtime().then(() => fetchFedWatch());
     scheduleRTRefresh(); // Reschedule with updated market-hours check
   }, delay);
-  // Update topbar badge
+  // Update topbar badge with 3-tier labels
   const badge = document.getElementById('auto-badge') || document.querySelector('.auto-badge');
   if (badge) {
     const fredMin  = Math.round(AUTO_REFRESH / 60000);
-    const rtMin    = Math.round(delay / 60000);
-    const mktLabel = isMarketHours() ? '🟢 LIVE' : '🔴 CLOSED';
-    const newsMin = Math.round(NEWS_REFRESH_INTERVAL / 60000);
-    badge.textContent = isMarketHours()
-      ? 'FRED:' + fredMin + 'M · RT:' + rtMin + 'M · NEWS:' + newsMin + 'M · 🟢LIVE'
-      : 'FRED:' + fredMin + 'M · RT:' + rtMin + 'M · NEWS:' + newsMin + 'M · 🔴CLOSED';
+    const newsMin  = Math.round(NEWS_REFRESH_INTERVAL / 60000);
+    const wsActive = _finnhubWS && _finnhubWS.readyState === 1;
+    const hasFH    = !!EXT_KEYS.FINNHUB;
+    const rtLabel  = wsActive ? 'RT:WS' : hasFH ? 'RT:15S' : ('RT:' + Math.round(delay / 60000) + 'M');
+    const yieldLabel = hasFH ? ' · YIELDS:1M' : '';
+    const mktLabel = isMarketHours() ? '🟢LIVE' : '🔴CLOSED';
+    badge.textContent = 'FRED:' + fredMin + 'M · ' + rtLabel + yieldLabel + ' · NEWS:' + newsMin + 'M · ' + mktLabel;
   }
 }
 
@@ -3132,29 +3247,42 @@ function scheduleFinnhubRefresh() {
 }
 
 
+// Finnhub REST quote polling: 15s during market hours, 5m after close
+let _finnhubQuoteTimer = null;
+function scheduleFinnhubQuotes() {
+  if (_finnhubQuoteTimer) clearTimeout(_finnhubQuoteTimer);
+  if (!EXT_KEYS.FINNHUB) return;
+  const delay = isMarketHours() ? 15 * 1000 : 5 * 60 * 1000;
+  _finnhubQuoteTimer = setTimeout(() => {
+    fetchFinnhubQuotes();
+    scheduleFinnhubQuotes(); // Reschedule with updated market-hours check
+  }, delay);
+}
+
+
 // ════════════════════════════════════════════════════
 // FINNHUB WEBSOCKET — TRUE REAL-TIME STREAMING PRICES
-// Replaces 2-min Yahoo polling with sub-second updates
-// wss://ws.finnhub.io?token=KEY
-// Free tier: supports streaming for US stocks/ETFs/forex
-// Coverage: S&P 500, major ETFs, crypto, forex
-// Note: Treasuries (^TNX etc) not available via Finnhub WS
-//       Yahoo polling remains for Treasuries + VIX + MOVE
+// Sub-second updates via wss://ws.finnhub.io
+// Free tier: supports streaming for US stocks/ETFs
+// Covers: SPY, GLD, USO, CPER, UUP, VIXY (6 ETF proxies)
+// Yahoo polling remains for Treasury YIELDS + MOVE + ZQ futures
 // ════════════════════════════════════════════════════
 
-// Finnhub WS symbols that map to our RT keys
+// Finnhub WS symbols — ETF proxies for sub-second streaming
+// Same symbols as FINNHUB_QUOTE_SYMBOLS for consistency
 const FINNHUB_WS_SYMBOLS = {
-  'AAPL':     null,   // Placeholder — we use indices not individual stocks
-  // Major ETFs as proxies:
   'SPY':      'SP500_RT',  // S&P 500 proxy
   'GLD':      'GOLD_RT',   // Gold proxy
-  'USO':      'OIL_RT',    // Oil proxy  
-  'HG1!':     'COPPER_RT', // Copper (if available)
+  'USO':      'OIL_RT',    // Oil proxy
+  'CPER':     'COPPER_RT', // Copper ETF
+  'UUP':      'DXY_RT',    // Dollar Index proxy
+  'VIXY':     'VIX_RT',    // VIX proxy (short-term VIX futures ETF)
 };
 
 let _finnhubWS = null;
 let _wsReconnectTimer = null;
 let _wsPrices = {};   // symbol -> { price, time }
+let _wsRenderPending = false; // Throttle WS re-renders to requestAnimationFrame
 
 function startFinnhubWS() {
   if (!EXT_KEYS.FINNHUB) return; // No key = no WS
@@ -3173,14 +3301,14 @@ function startFinnhubWS() {
       });
       // Update badge
       const badge = document.getElementById('auto-badge') || document.querySelector('.auto-badge');
-      if (badge) badge.textContent = badge.textContent.replace('RT:2M', 'RT:STREAM');
+      if (badge) badge.textContent = badge.textContent.replace(/RT:\w+/, 'RT:WS');
     };
     
     _finnhubWS.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type !== 'trade' || !msg.data) return;
-        
+
         let updated = false;
         msg.data.forEach(trade => {
           const rtKey = FINNHUB_WS_SYMBOLS[trade.s];
@@ -3192,15 +3320,20 @@ function startFinnhubWS() {
           RT[rtKey].change = trade.p - prevClose;
           RT[rtKey].changePct = prevClose ? ((trade.p - prevClose) / prevClose * 100) : 0;
           if (!RT[rtKey].prevClose) RT[rtKey].prevClose = prevClose;
-          RT[rtKey]._wsUpdated = true;
+          RT[rtKey].timestamp = trade.t || Date.now(); // Finnhub sends epoch ms
+          RT[rtKey]._source = 'ws';
           _wsPrices[rtKey] = { price: trade.p, time: trade.t };
           updated = true;
         });
-        
-        // Re-render RT tab and banner if visible
-        if (updated) {
-          if (DONE['realtime']) renderRealtime();
-          if (typeof updateRTBanner === 'function') updateRTBanner();
+
+        // Throttle re-renders to requestAnimationFrame (SPY can generate 50+ trades/sec)
+        if (updated && !_wsRenderPending) {
+          _wsRenderPending = true;
+          requestAnimationFrame(() => {
+            if (DONE['realtime']) renderRealtime();
+            if (typeof updateRTBanner === 'function') updateRTBanner();
+            _wsRenderPending = false;
+          });
         }
       } catch(e) { /* ignore parse errors */ }
     };
@@ -3282,7 +3415,8 @@ async function startTerminal() {
   scheduleRTRefresh();     // RT prices: 2min market hours, 15min overnight
   scheduleNewsRefresh();   // News: 10min (NewsAPI rate limit aware)
   scheduleFinnhubRefresh();// Economic calendar: 12h
-  startFinnhubWS();        // Streaming prices via Finnhub WebSocket
+  scheduleFinnhubQuotes(); // Finnhub REST quotes: 15s market hours, 5min off
+  startFinnhubWS();        // Streaming prices via Finnhub WebSocket (Tier 1)
 }
 
 // ── CLEANUP — stop all timers and WebSocket on page unload ──
@@ -3292,6 +3426,7 @@ window.addEventListener('beforeunload', () => {
   if (_rtTimer) clearTimeout(_rtTimer);
   if (_newsTimer) clearTimeout(_newsTimer);
   if (_finnhubTimer) clearTimeout(_finnhubTimer);
+  if (_finnhubQuoteTimer) clearTimeout(_finnhubQuoteTimer);
   stopFinnhubWS();
 });
 
