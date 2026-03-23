@@ -72,7 +72,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .logo span{color:var(--muted2);font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9px;}
 .topbar-r{display:flex;align-items:center;gap:8px;font-size:9px;}
 .cpg-logo-wrap{display:flex;align-items:center;padding:2px 7px 2px 5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;margin-right:2px;}
-.cpg-logo-img{height:21px;width:auto;display:block;}
+.cpg-logo-img{height:32px;width:auto;display:block;image-rendering:-webkit-optimize-contrast;filter:brightness(1.2) contrast(1.1);}
 .topbar-divider{width:1px;height:20px;background:var(--border2);margin:0 6px;flex-shrink:0;}
 .tbadge{border:1px solid var(--border2);padding:2px 7px;border-radius:2px;font-size:7px;letter-spacing:1px;color:var(--muted2);}
 .auto-badge{border:1px solid rgba(0,255,157,.3);padding:2px 7px;border-radius:2px;font-size:7px;letter-spacing:1px;color:var(--green);}
@@ -109,10 +109,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 /* ══ CARD ══ */
 .card{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:12px 14px;position:relative;overflow:hidden;}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
-.ct{font-size:8px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px;justify-content:space-between;}
+.ct{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px;justify-content:space-between;}
 .ct-left{display:flex;align-items:center;gap:5px;}
 .cdot{width:4px;height:4px;border-radius:50%;}
-.freshness{font-size:7px;color:var(--muted);letter-spacing:.5px;}
+.freshness{font-size:8px;color:var(--muted);letter-spacing:.5px;}
 .freshness.fresh{color:var(--green2);}
 .freshness.stale{color:var(--yellow);}
 .freshness.old{color:var(--red);}
@@ -121,7 +121,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .bv{font-size:24px;font-weight:700;color:var(--white);line-height:1;margin-bottom:3px;font-family:'Share Tech Mono',monospace;}
 .bv.pos{color:var(--green);}.bv.neg{color:var(--red);}.bv.warn{color:var(--yellow);}.bv.info{color:var(--blue);}.bv.purp{color:var(--purple);}.bv.oran{color:var(--orange);}
 .vc{font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:4px;}
-.vl{font-size:9px;color:var(--muted2);}
+.vl{font-size:10px;color:var(--muted2);}
 .cp{color:var(--green);}.cn{color:var(--red);}.cw{color:var(--yellow);}.cm{color:var(--muted2);}.cb{color:var(--blue);}.cc{color:var(--cyan);}.cpur{color:var(--purple);}.cor{color:var(--orange);}
 /* skeleton */
 .skel{background:linear-gradient(90deg,var(--border) 25%,var(--border2) 50%,var(--border) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:2px;height:24px;margin-bottom:4px;}
@@ -134,21 +134,21 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 
 /* ══ SH ══ */
 .sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:6px;}
-.sh h2{font-size:8px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;white-space:nowrap;font-family:'Orbitron',sans-serif;}
+.sh h2{font-size:10px;letter-spacing:3px;color:var(--white);text-transform:uppercase;white-space:nowrap;font-family:'Orbitron',sans-serif;}
 .sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
 .shb{font-size:7px;padding:2px 6px;border-radius:2px;letter-spacing:1px;white-space:nowrap;background:rgba(255,255,255,.04);color:var(--muted2);border:1px solid var(--border);}
 
 /* ══ COMM ══ */
 .comm{background:var(--bg3);border:1px solid var(--border2);border-left:3px solid var(--blue);border-radius:3px;padding:11px 14px;margin-bottom:12px;}
 .comm.warn{border-left-color:var(--yellow);}.comm.alert{border-left-color:var(--red);}.comm.ok{border-left-color:var(--green);}.comm.pur{border-left-color:var(--purple);}.comm.oran{border-left-color:var(--orange);}
-.ct2{font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;color:var(--blue);}
+.ct2{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;color:var(--blue);}
 .comm.warn .ct2{color:var(--yellow);}.comm.alert .ct2{color:var(--red);}.comm.ok .ct2{color:var(--green);}.comm.pur .ct2{color:var(--purple);}.comm.oran .ct2{color:var(--orange);}
-.comm p{font-size:11px;color:var(--text);line-height:1.75;}
+.comm p{font-size:11px;color:var(--text);line-height:1.8;}
 .comm p strong{color:var(--white);}
 
 /* ══ TABLE ══ */
 .dt{width:100%;border-collapse:collapse;font-size:11px;}
-.dt th{text-align:left;font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:5px 9px;border-bottom:1px solid var(--border);}
+.dt th{text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:5px 9px;border-bottom:1px solid var(--border);}
 .dt td{padding:7px 9px;border-bottom:1px solid rgba(26,35,56,.5);color:var(--text);}
 .dt tr:hover td{background:rgba(255,255,255,.012);}
 .dt tr:last-child td{border-bottom:none;}
@@ -2034,8 +2034,11 @@ function renderRealtime() {
       T2Y_RT:   'T2Y',    // 2Y Treasury: Yahoo ^TYNS → FRED DGS2
       OIL_RT:   'OIL',    GOLD_RT:  'GOLD', COPPER_RT: 'COPPER',
       SP500_RT: 'SP500',  VIX_RT:   'VIX',  DXY_RT: 'DXY',
-      // MOVE has no FRED equivalent - no fallback, will show loading state
+      MOVE_RT:  'MOVE',   // MOVE Index — tooltip only (no FRED data fallback)
     };
+    // Map RT key → KPI_TIPS key for tooltip
+    const tipKey = FRED_FALLBACK[key] || key.replace('_RT','');
+    const tipAttr = KPI_TIPS[tipKey] ? ' data-tip="'+tipKey+'" style="cursor:help"' : '';
     let d = RT[key];
     let isFredFallback = false;
     // Fall back to FRED data if RT not yet loaded
@@ -2074,7 +2077,7 @@ function renderRealtime() {
     const freshClass = RT[key]?._source === 'ws' ? 'freshness live' : 'freshness fresh';
     return `<div class="card">
       <div class="ct">
-        <div class="ct-left"><span class="cdot" style="background:${chgColor}"></span>${label}</div>
+        <div class="ct-left"><span class="cdot" style="background:${chgColor}"></span><span${tipAttr}>${label}</span></div>
         <span class="${freshClass}">${age}</span>
       </div>
       <div class="bv ${bvClass}">${price}${unit}</div>
@@ -2986,9 +2989,9 @@ const KPI_TIPS = {
   T1Y:          {def:"1-Year Treasury yield. Forward expectation of Fed Funds rate over next 12 months.", src:"US Treasury / FRED: DGS1"},
   T2Y:          {def:"2-Year Treasury yield. Best market predictor of Fed policy 12-24 months out. Dalio: 'The 2Y is the most important rate in the world.'", src:"US Treasury / FRED: DGS2"},
   T5Y:          {def:"5-Year Treasury yield. Mid-term rate used in CRE cap rate benchmarking.", src:"US Treasury / FRED: DGS5"},
-  T10Y:         {def:"10-Year Treasury yield. Most important benchmark for cap rates, mortgage rates, and long-term discount rates.", src:"US Treasury / FRED: DGS10"},
+  T10Y:         {def:"10-Year Treasury yield. Most important benchmark for cap rates, mortgage rates, and long-term discount rates.", src:"US Treasury / FRED: DGS10", note:"Schwarzman: 'The 10-year Treasury is the center of gravity for all asset pricing. When it moves 100bps, everything reprices.'"},
   T30Y:         {def:"30-Year Treasury yield. Benchmark for long-duration fixed income and 30yr mortgage rates.", src:"US Treasury / FRED: DGS30"},
-  SOFR:         {def:"Secured Overnight Financing Rate — replaced LIBOR as the primary US benchmark rate for floating-rate debt. Most floating-rate CRE loans are SOFR + spread.", src:"NY Fed / FRED: SOFR"},
+  SOFR:         {def:"Secured Overnight Financing Rate — replaced LIBOR as the primary US benchmark rate for floating-rate debt. Most floating-rate CRE loans are SOFR + spread.", src:"NY Fed / FRED: SOFR", note:"Jon Gray (Blackstone): 'Floating-rate exposure is the single biggest risk in CRE portfolios today. SOFR is the variable that keeps me up at night.'"},
   YIELD_CURVE:  {def:"10Y minus 2Y Treasury spread. When negative (inverted), historically signals recession 12-18 months ahead. Ackman: 'The curve tells you what the market believes about the economy.'", src:"US Treasury / FRED: T10Y2Y"},
   YIELD_3M10Y:  {def:"10Y minus 3M Treasury spread. Fed's preferred recession indicator — more reliable than 2s10s historically.", src:"US Treasury / FRED: T10Y3M"},
   TIPS5:        {def:"5-Year TIPS Breakeven — market's expectation for average inflation over the next 5 years. Above Fed's 2% target = tightening pressure.", src:"US Treasury / FRED: T5YIE"},
@@ -2997,17 +3000,17 @@ const KPI_TIPS = {
   IG:           {def:"Investment Grade Corporate Bond Yield. CRE bridge loan pricing = IG spread + Treasury + lender margin.", src:"ICE BofA / FRED: BAMLC0A0CM"},
   BAA_SPREAD:   {def:"BAA (lowest investment grade) bond spread over 10Y Treasury. Widens in stress — signals tighter lending conditions.", src:"Moody's / FRED: BAA10Y"},
   BBB_YIELD:    {def:"BBB-rated corporate bond yield. Bottom rung of investment grade. When this spikes, CRE refinancing dries up.", src:"ICE BofA / FRED: BAMLC0A4CBBB"},
-  MORT30:       {def:"30-Year Fixed Mortgage Rate (Freddie Mac weekly survey). Determines single-family affordability; high rates push demand into rental.", src:"Freddie Mac / FRED: MORTGAGE30US"},
+  MORT30:       {def:"30-Year Fixed Mortgage Rate (Freddie Mac weekly survey). Determines single-family affordability; high rates push demand into rental.", src:"Freddie Mac / FRED: MORTGAGE30US", note:"Buffett: 'The 30-year mortgage is America's greatest financial invention. When rates rise, would-be buyers become renters.'"},
   MORT15:       {def:"15-Year Fixed Mortgage Rate. Tracks closely with 10Y Treasury + ~200bps spread.", src:"Freddie Mac / FRED: MORTGAGE15US"},
-  CS_HPI:       {def:"S&P Case-Shiller National Home Price Index. Monthly; lags ~2 months. Rising HPI = more renters priced out of buying.", src:"S&P/CoreLogic / FRED: CSUSHPISA"},
+  CS_HPI:       {def:"S&P Case-Shiller National Home Price Index. Monthly; lags ~2 months. Rising HPI = more renters priced out of buying.", src:"S&P/CoreLogic / FRED: CSUSHPISA", note:"Buffett: 'Housing is the best inflation hedge for ordinary Americans. Over the long run, real estate keeps up with inflation — and leverage amplifies the return.'"},
   CS_HPI_20:    {def:"Case-Shiller 20-City Composite. Covers top 20 US metro markets. Better urban indicator.", src:"S&P/CoreLogic / FRED: SPCS20RSA"},
   FHFA_HPI:     {def:"FHFA House Price Index — purchase-only, covers all US geographies including non-Case-Shiller markets.", src:"FHFA / FRED: USSTHPI"},
-  HOUSING_STARTS:{def:"Total new residential housing units started (annualized). Decline = future supply shortage; surge = cap rate pressure.", src:"Census/HUD / FRED: HOUST"},
+  HOUSING_STARTS:{def:"Total new residential housing units started (annualized). Decline = future supply shortage; surge = cap rate pressure.", src:"Census/HUD / FRED: HOUST", note:"Flatt (Brookfield): 'Real assets are the foundation of wealth creation. Housing starts tell you where capital is flowing and where it isn't.'"},
   MF_STARTS:    {def:"5+ Unit (Multifamily) Housing Starts. Direct leading indicator of apartment supply 12-18 months ahead.", src:"Census/HUD / FRED: HOUST5F"},
   MF_PERMITS:   {def:"5+ Unit Building Permits. Leads starts by 1-3 months; leads completions by 12-18 months. Dalio: 'Watch permits, not headlines.'", src:"Census/HUD / FRED: PERMIT5"},
-  MF_UC:        {def:"Multifamily Units Under Construction. The actual supply wave in progress. Peak UC = maximum near-term supply pressure.", src:"Census/HUD / FRED: UNDCONTSA"},
+  MF_UC:        {def:"Multifamily Units Under Construction. The actual supply wave in progress. Peak UC = maximum near-term supply pressure.", src:"Census/HUD / FRED: UNDCONTSA", note:"Marc Rowan (Apollo): 'The supply wave in multifamily will peak and recede. Timing the other side of the supply cycle is where the best risk-adjusted returns are.'"},
   MF_COMPLETE:  {def:"Multifamily Completions. When units complete, they compete directly for your tenants. Completions lag permits by ~18 months.", src:"Census/HUD / FRED: COMPU5MUSA"},
-  VACANCY_RENT: {def:"National Rental Vacancy Rate (Census). Below 6% = landlord market. Above 7% = tenant market. Student housing typically runs 2-4%.", src:"Census / FRED: RRVRUSQ156N"},
+  VACANCY_RENT: {def:"National Rental Vacancy Rate (Census). Below 6% = landlord market. Above 7% = tenant market. Student housing typically runs 2-4%.", src:"Census / FRED: RRVRUSQ156N", note:"Jon Gray (Blackstone): 'Supply and demand is everything in real estate. Low vacancy rates are the best predictor of rent growth.'"},
   MEDIAN_PRICE: {def:"Median New Home Sale Price. When buying becomes unaffordable, renters stay renters — boosting apartment demand.", src:"Census/HUD / FRED: MSPNHSUS"},
   HOME_AFFORD:  {def:"NAR Housing Affordability Index. Below 100 = median family cannot afford median home. Low affordability = strong rental demand.", src:"NAR / FRED: FIXHAI"},
   HOMEOWN_RATE: {def:"US Homeownership Rate. Falling rate = growing renter pool. Millennial cohort structural tailwind for rentals.", src:"Census / FRED: RSAHORUSQ156S"},
@@ -3023,43 +3026,45 @@ const KPI_TIPS = {
   CPI:          {def:"Consumer Price Index — headline inflation. Includes food and energy. Monthly. Basis for lease escalation clauses.", src:"BLS / FRED: CPIAUCSL"},
   CORE_CPI:     {def:"Core CPI (ex food & energy). Fed's secondary target. Stickier than headline. 3%+ = persistent pressure.", src:"BLS / FRED: CPILFESL"},
   CORE_PCE:     {def:"Core PCE Deflator — Fed's primary inflation target (2%). Most important series for rate policy. Ackman: 'Watch PCE, not CPI.'", src:"BEA / FRED: PCEPILFE"},
-  SHELTER:      {def:"CPI Shelter Component (35% of CPI). Lags market rents by 12-18 months due to lease re-pricing methodology.", src:"BLS / FRED: CUSR0000SAH1"},
+  SHELTER:      {def:"CPI Shelter Component (35% of CPI). Lags market rents by 12-18 months due to lease re-pricing methodology.", src:"BLS / FRED: CUSR0000SAH1", note:"Ackman: 'Shelter CPI is the most lagging indicator in the entire CPI basket. The real disinflation in rents happened months ago — the data just hasn't caught up.'"},
   RENT_OER:     {def:"Owners' Equivalent Rent — BLS estimate of what homeowners 'would pay' to rent their home. 24% of CPI. Slow-moving.", src:"BLS / FRED: CUSR0000SEHC"},
   PMI_MFG:      {def:"Manufacturing Business Confidence (OECD). Proxy for ISM Manufacturing PMI direction. >50 = expanding.", src:"OECD / FRED: BSCICP02USM460S"},
   LEADING_IDX:  {def:"Conference Board Leading Economic Index. Composite of 10 forward-looking indicators. 3+ consecutive declines = recession signal.", src:"Conference Board / FRED: USSLIND"},
-  FED_BS:       {def:"Federal Reserve Balance Sheet (Total Assets). QE = expanding balance sheet = liquidity injection = risk-on. QT = opposite.", src:"Federal Reserve / FRED: WALCL"},
+  FED_BS:       {def:"Federal Reserve Balance Sheet (Total Assets). QE = expanding balance sheet = liquidity injection = risk-on. QT = opposite.", src:"Federal Reserve / FRED: WALCL", note:"Druckenmiller: 'Never fight the Fed. The balance sheet is the single most important variable for asset prices.'"},
   RRPON:        {def:"Reverse Repo Facility. Cash parked overnight at Fed by money market funds. Draining = liquidity returning to system = positive.", src:"NY Fed / FRED: RRPONTSYD"},
   RESERVE:      {def:"Bank Reserves at the Fed. When reserves fall below ~$3T, liquidity stress emerges. Ackman uses this to time credit cycles.", src:"Federal Reserve / FRED: WRESBAL"},
   TGA_BAL:      {def:"Treasury General Account — US government's checking account at the Fed. TGA drawdown floods system with liquidity. TGA rebuild absorbs it.", src:"Federal Reserve / FRED: WDTGAL"},
   M2:           {def:"M2 Money Supply. Broad money including savings and money market accounts. YOY growth drives asset prices with 12-18mo lag. Dalio's #1 macro variable.", src:"Federal Reserve / FRED: M2SL"},
-  NFCI:         {def:"Chicago Fed National Financial Conditions Index. Composite of 105 weekly indicators. Negative = looser than historical average (good for risk). Positive = tighter.", src:"Chicago Fed / FRED: NFCI"},
+  NFCI:         {def:"Chicago Fed National Financial Conditions Index. Composite of 105 weekly indicators. Negative = looser than historical average (good for risk). Positive = tighter.", src:"Chicago Fed / FRED: NFCI", note:"Druckenmiller: 'Financial conditions are the transmission mechanism of monetary policy. Watch the NFCI, not the Fed statements.'"},
   FIN_STRESS:   {def:"St. Louis Fed Financial Stress Index. Below 0 = normal. Above 1 = elevated stress. Above 2 = crisis territory. Weekly.", src:"St. Louis Fed / FRED: STLFSI"},
   CRE_LOANS:    {def:"Commercial Real Estate Loans at all commercial banks. Tracks lending cycle — contraction signals tighter deal financing.", src:"Federal Reserve / FRED: CREACBW027NBOG"},
-  CMBS_DQ:      {def:"CMBS Delinquency Rate — bank CRE loans 30+ days past due. Rising = distress building in CRE credit markets.", src:"Federal Reserve / FRED: DRBLACBS"},
+  CMBS_DQ:      {def:"CMBS Delinquency Rate — bank CRE loans 30+ days past due. Rising = distress building in CRE credit markets.", src:"Federal Reserve / FRED: DRBLACBS", note:"Schwarzman: 'CRE distress cycles are where generational wealth is created. Watch delinquencies — when they peak, deploy capital aggressively.'"},
   CHARGE_OFF:   {def:"CRE Loan Charge-Off Rate at commercial banks. Banks writing off bad CRE loans. Rising = realized losses entering the system.", src:"Federal Reserve / FRED: CORBLACBS"},
-  SLOOS_CRE:    {def:"Senior Loan Officer Survey — % of banks tightening CRE lending standards. When this rises sharply, new CRE deals become very hard to finance.", src:"Federal Reserve / FRED: DRTSCILM"},
+  SLOOS_CRE:    {def:"Senior Loan Officer Survey — % of banks tightening CRE lending standards. When this rises sharply, new CRE deals become very hard to finance.", src:"Federal Reserve / FRED: DRTSCILM", note:"Jon Gray (Blackstone): 'When bank lending standards tighten, alternative lenders fill the gap at wider spreads. That's where the opportunity is.'"},
   CREDIT_CARD_DQ:{def:"Credit Card Delinquency Rate. Consumer stress leading indicator. Rising = renters struggling with all debt, not just rent.", src:"Federal Reserve / FRED: DRCCLACBS"},
   CONF:         {def:"University of Michigan Consumer Sentiment. Below 70 = consumers very pessimistic. Falls 3-6 months before spending drops.", src:"Univ. of Michigan / FRED: UMCSENT"},
-  OIL:          {def:"WTI Crude Oil Price. Drives energy inflation, transportation costs, and construction costs. Oil > $90 = stagflation risk.", src:"EIA / FRED: DCOILWTICO"},
-  VIX:          {def:"CBOE Volatility Index — 'fear gauge' for equities. > 25 = elevated fear, deal financing harder. > 40 = crisis. Munger: 'When others are fearful, be greedy.'", src:"CBOE / FRED: VIXCLS"},
-  SP500:        {def:"S&P 500 Index. Equity market direction affects REIT valuations, pension fund allocations, and cap rate expectations.", src:"S&P / FRED: SP500"},
-  DXY:          {def:"US Dollar Index (trade-weighted). Strong dollar = tighter global liquidity, capital flows back to US, commodity prices fall.", src:"Federal Reserve / FRED: DTWEXBGS"},
-  COPPER:       {def:"Copper Price. 'Dr. Copper' — copper demand drives industrial/construction activity. Cu/Au ratio rising = growth optimism.", src:"World Bank / FRED: PCOPPUSDM"},
-  STUDENT_DEBT: {def:"Total Student Loan Outstanding. $1.7T+ constrains household formation and rent payment capacity for 18-34 demographic.", src:"Federal Reserve / FRED: SLOAS"},
+  OIL:          {def:"WTI Crude Oil Price. Drives energy inflation, transportation costs, and construction costs. Oil > $90 = stagflation risk.", src:"EIA / FRED: DCOILWTICO", note:"Druckenmiller: 'Oil is the single best leading indicator of inflation. When it moves, everything else follows.'"},
+  GOLD:         {def:"Gold Price. Primary safe-haven asset and inflation hedge. Rising gold with falling real rates = capital seeking protection. Gold/Cu ratio signals risk appetite.", src:"LBMA / Yahoo: GC=F", note:"Druckenmiller: 'Gold is the one asset that works in both inflation and deflation scenarios. It's the ultimate hedge against policy error.'"},
+  VIX:          {def:"CBOE Volatility Index — 'fear gauge' for equities. > 25 = elevated fear, deal financing harder. > 40 = crisis.", src:"CBOE / FRED: VIXCLS", note:"Munger: 'When others are fearful, be greedy — but only if you understand what you're buying.'"},
+  SP500:        {def:"S&P 500 Index. Equity market direction affects REIT valuations, pension fund allocations, and cap rate expectations.", src:"S&P / FRED: SP500", note:"Druckenmiller: 'Earnings don't move the market. It's the Federal Reserve and liquidity that move the market.'"},
+  DXY:          {def:"US Dollar Index (trade-weighted). Strong dollar = tighter global liquidity, capital flows back to US, commodity prices fall.", src:"Federal Reserve / FRED: DTWEXBGS", note:"Druckenmiller: 'The dollar is the most important variable in the global macro framework. Everything else is derivative.'"},
+  COPPER:       {def:"Copper Price. 'Dr. Copper' — copper demand drives industrial/construction activity. Cu/Au ratio rising = growth optimism.", src:"World Bank / FRED: PCOPPUSDM", note:"Flatt: 'Copper demand is the best real-time signal for infrastructure investment and global economic activity.'"},
+  MOVE:         {def:"MOVE Index (Merrill Lynch Option Volatility Estimate). Bond market VIX — measures implied volatility in Treasury options. Elevated MOVE = wider CRE lending spreads, slower deal flow, higher going-in yield requirements.", src:"ICE BofA / Yahoo: ^MOVE", note:"Schwarzman: 'When MOVE is high, the credit window closes. No CMBS, no agency deals, no CRE transactions. Wait for MOVE to settle.'"},
+  STUDENT_DEBT: {def:"Total Student Loan Outstanding. $1.7T+ constrains household formation and rent payment capacity for 18-34 demographic.", src:"Federal Reserve / FRED: SLOAS", note:"Marc Rowan (Apollo): 'Student debt is the demographic headwind that defines this generation. It delays homeownership and extends the rental years.'"},
   AVG_EARN:     {def:"Average Weekly Earnings — private sector. Tracks wage growth relative to rent growth. Earnings growing faster than rent = affordability improving.", src:"BLS / FRED: CES0500000003"},
   CONST_COST:   {def:"PPI Construction Materials. Rising costs = development infeasibility → reduced future supply → bullish for existing stock.", src:"BLS / FRED: WPUSI012011"},
   FED_DEFICIT:  {def:"Federal Budget Surplus/Deficit. Large deficits drive Treasury issuance → upward pressure on long rates → cap rate expansion.", src:"US Treasury / FRED: FYFSD"},
   DEBT_GDP:     {def:"Federal Debt as % of GDP. Measures long-run fiscal sustainability. Above 120% historically associated with rate volatility.", src:"Federal Reserve / FRED: GFDEGDQ188S"},
-  ECI:          {def:"Employment Cost Index. Powell's most-watched wage inflation measure. Structural (not volatile) — stickiest input to services inflation.", src:"BLS / FRED: ECIALLCIV"},
+  ECI:          {def:"Employment Cost Index. Powell's most-watched wage inflation measure. Structural (not volatile) — stickiest input to services inflation.", src:"BLS / FRED: ECIALLCIV", note:"Ackman: 'The ECI is the one number that tells you if wage-price spirals are forming. It's the Fed's true north star.'"},
   EXPINF1YR:    {def:"Cleveland Fed 1-Year Inflation Expectation. Market consensus for near-term inflation based on Treasury/options markets.", src:"Cleveland Fed / FRED: EXPINF1YR"},
   EXPINF10YR:   {def:"Cleveland Fed 10-Year Inflation Expectation. Long-run inflation anchor. If this de-anchors above 3%, Fed must act aggressively.", src:"Cleveland Fed / FRED: EXPINF10YR"},
-  TERM_PREM:    {def:"10-Year Term Premium (NY Fed ACM model). Extra yield investors demand for duration risk. Rising = structural upward pressure on cap rates.", src:"NY Fed / FRED: THREEFYTP10"},
+  TERM_PREM:    {def:"10-Year Term Premium (NY Fed ACM model). Extra yield investors demand for duration risk. Rising = structural upward pressure on cap rates.", src:"NY Fed / FRED: THREEFYTP10", note:"Druckenmiller: 'The term premium is the hidden tax on long-duration assets. When it rises, cap rates must follow.'"},
   PSAVERT:      {def:"Personal Savings Rate. Low savings = consumer stretched. Below 3% historically precedes consumer slowdown.", src:"BEA / FRED: PSAVERT"},
   REAL_DPI:     {def:"Real Disposable Personal Income. After-tax income adjusted for inflation. The actual number showing purchasing power.", src:"BEA / FRED: DSPIC96"},
 
   // ── ADDITIONAL KPI TIPS (55 more series) ──
   SOFR_90:      {def:"90-Day SOFR Average — smoothed version of SOFR used as a floating rate benchmark in many CRE loan agreements. Averaged over 90 days to reduce volatility.", src:"NY Fed / FRED: SOFR90DAYAVG"},
-  PRIME:        {def:"US Prime Rate — benchmark rate for consumer and business loans. Prime = Fed Funds + 300bps historically. Tracks the Fed Funds rate closely.", src:"Federal Reserve / FRED: DPRIME"},
+  PRIME:        {def:"US Prime Rate — benchmark rate for consumer and business loans. Prime = Fed Funds + 300bps historically. Tracks the Fed Funds rate closely.", src:"Federal Reserve / FRED: DPRIME", note:"Schwarzman: 'The prime rate is the cost of doing business for every small company in America. When it rises, deal flow slows everywhere.'"},
   IOER:         {def:"Interest on Reserve Balances — rate Fed pays banks on excess reserves. Sets the floor for overnight rates. Currently equals Fed Funds target.", src:"Federal Reserve / FRED: IORB"},
   BREAKEVEN_5Y5Y:{def:"5Y5Y Forward Breakeven — market's inflation expectation for the 5-year period starting 5 years from now. The Fed's favorite long-run inflation anchor.", src:"US Treasury / FRED: T5YIFR"},
   CORP_AAA:     {def:"AAA Corporate Bond Yield — highest investment grade. Spreads near Treasuries indicate strong credit market confidence. Munger: 'The spread between AAA and junk tells you everything about fear.'", src:"Moody's / FRED: AAA"},
@@ -3124,7 +3129,7 @@ function initTooltips() {
     'background:#0c1422','border:1px solid var(--border2)',
     'border-radius:4px','padding:10px 12px',
     'max-width:320px','box-shadow:0 8px 32px rgba(0,0,0,.8)',
-    'font-family:var(--mono)','font-size:9px','line-height:1.6',
+    'font-family:var(--mono)','font-size:10px','line-height:1.6',
     'color:var(--text)','top:0','left:0'
   ].join(';');
   document.body.appendChild(tip);
@@ -3550,10 +3555,30 @@ function spark(data, color='var(--green)', h=36) {
     return `${x},${y}`;
   });
   const last=pts[pts.length-1].split(',');
-  return `<svg class="sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <path d="M0,${h} L${pts[0]} ${pts.map(p=>`L${p}`).join(' ')} L${w},${h} Z" fill="${color}" opacity="0.06"/>
+  const uid='sp'+Math.random().toString(36).slice(2,8);
+  const valsAttr=data.map(v=>v.toFixed(4)).join(',');
+  return `<svg class="sp" viewBox="0 0 ${w} ${h+10}" preserveAspectRatio="none"
+    data-vals="${valsAttr}" data-w="${w}" data-h="${h}" data-mn="${mn}" data-rng="${rng}" style="cursor:crosshair"
+    onmousemove="(function(e,s){
+      var r=s.getBoundingClientRect(),rx=(e.clientX-r.left)/r.width,
+          vals=s.dataset.vals.split(',').map(Number),
+          w=+s.dataset.w,h=+s.dataset.h,mn=+s.dataset.mn,rng=+s.dataset.rng,
+          i=Math.round(rx*(vals.length-1)),v=vals[Math.max(0,Math.min(i,vals.length-1))],
+          x=(i/(vals.length-1))*w,y=h-((v-mn)/rng)*(h-4)-2;
+      s.querySelector('.sp-hl').setAttribute('x1',x);s.querySelector('.sp-hl').setAttribute('x2',x);
+      s.querySelector('.sp-hl').style.display='';
+      s.querySelector('.sp-hd').setAttribute('cx',x);s.querySelector('.sp-hd').setAttribute('cy',y);
+      s.querySelector('.sp-hd').style.display='';
+      var t=s.querySelector('.sp-ht');t.textContent=v>=1000?v.toFixed(0):v>=100?v.toFixed(1):v.toFixed(2);
+      t.setAttribute('x',x);t.setAttribute('y',Math.max(8,y-6));t.style.display='';
+    })(event,this)"
+    onmouseleave="this.querySelector('.sp-hl').style.display='none';this.querySelector('.sp-hd').style.display='none';this.querySelector('.sp-ht').style.display='none'">
+    <path d="M0,${h} L${pts[0]} ${pts.map(p=>'L'+p).join(' ')} L${w},${h} Z" fill="${color}" opacity="0.06"/>
     <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
     <circle cx="${last[0]}" cy="${last[1]}" r="2" fill="${color}"/>
+    <line class="sp-hl" x1="0" y1="0" x2="0" y2="${h}" stroke="var(--white)" stroke-width="0.5" opacity="0.4" style="display:none"/>
+    <circle class="sp-hd" cx="0" cy="0" r="3" fill="${color}" stroke="var(--white)" stroke-width="1" style="display:none"/>
+    <text class="sp-ht" x="0" y="0" font-size="8" fill="var(--white)" text-anchor="middle" font-family="JetBrains Mono,monospace" style="display:none;pointer-events:none"></text>
   </svg>`;
 }
 
@@ -3915,9 +3940,9 @@ function renderRates() {
       <text x="${p.x}" y="${p.y-6}" text-anchor="middle" font-size="7" fill="${cc}" font-family="JetBrains Mono">${p.v.toFixed(2)}%</text>`).join('')}
   </svg>`;
   document.getElementById('tab-rates').innerHTML=`
-    ${sh('YIELD CURVE & CREDIT')}
+    ${sh('YIELD CURVE & CREDIT',RT_LOADED&&RT['T10Y_RT']?.price!=null?'LIVE RT DATA':'FRED DAILY')}
     <div class="g2">
-      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:${cc}"></span>YIELD CURVE — ${isInv?'<span style="color:var(--red)">INVERTED ⚠</span>':'<span style="color:var(--green)">NORMAL</span>'}</div>${freshnessTag('T10Y')}</div>
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:${cc}"></span>YIELD CURVE — ${isInv?'<span style="color:var(--red)">INVERTED ⚠</span>':'<span style="color:var(--green)">NORMAL</span>'}</div>${RT_LOADED&&RT['T10Y_RT']?'<span class="freshness fresh">'+rtAge('T10Y_RT')+'</span>':freshnessTag('T10Y')}</div>
         ${curveSVG}
         <div style="margin-top:8px">
           <div class="gr"><span class="gl">10Y-3M Spread</span><div class="gt"><div class="gf" style="width:${Math.max(0,Math.min(100,((t10&&val('T3M')?t10-val('T3M'):0)+2)/4*100))}%;background:${isInv?'var(--red)':'var(--green)'}"></div></div><span class="gv">${fv(t10&&val('T3M')?t10-val('T3M'):null,2,'%')}</span></div>
@@ -3925,7 +3950,7 @@ function renderRates() {
           <div class="gr"><span class="gl">30Y-10Y Spread</span><div class="gt"><div class="gf" style="width:${Math.max(0,Math.min(100,((t30&&t10?t30-t10:0)+1)/2*100))}%;background:var(--blue)"></div></div><span class="gv">${fv(t30&&t10?t30-t10:null,2,'%')}</span></div>
         </div>
       </div>
-      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--yellow)"></span>RATE SUMMARY</div>${freshnessTag('FEDFUNDS')}</div>
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--yellow)"></span>RATE SUMMARY</div>${RT_LOADED&&RT['T10Y_RT']?'<span class="freshness fresh">'+rtAge('T10Y_RT')+'</span>':freshnessTag('FEDFUNDS')}</div>
         <table class="dt"><thead><tr><th>INSTRUMENT</th><th>RATE</th><th>CHG</th><th>RE USE</th></tr></thead><tbody>
           ${[['FEDFUNDS','Fed Funds',2,'%','Policy anchor'],['SOFR','SOFR',2,'%','Floating loans'],['PRIME','Prime Rate',2,'%','Construction'],['T2Y','2Y Treasury',2,'%','Short-term path'],['T10Y','10Y Treasury',2,'%','Cap floor'],['T30Y','30Y Treasury',2,'%','Long duration'],['MORT30','30Y Mortgage',2,'%','Resi market'],['HY','HY Spread OAS',2,'%','Credit stress'],['IG','IG Spread OAS',2,'%','IG credit']].map(([k,n,d,s,note])=>
             `<tr><td>${n}</td><td>${fv(val(k),d,s)}</td><td>${fc(chg(k),d,s)}</td><td class="tdl">${note}</td></tr>`).join('')}
@@ -4050,9 +4075,9 @@ function renderGrowth() {
     ${sh('INTERMARKET SIGNALS')}
     <div class="g4">
       ${mc('WTI CRUDE OIL',fv(val('OIL'),2,'$'),fc(mom3('OIL'),1,'% 3M'),'Inflation input',spark(spk('OIL'),'var(--orange)'),mom3('OIL')&&mom3('OIL')>10?'warn':'pos','OIL')}
-      ${mc('GOLD PRICE','$'+fv((RT_LOADED && RT['GOLD_RT']?.price != null ? RT['GOLD_RT'].price : null),0),(RT_LOADED && RT['GOLD_RT']?.changePct != null ? (RT['GOLD_RT'].changePct >= 0 ? '+' : '') + RT['GOLD_RT'].changePct.toFixed(2) + '% 1D' : fc(mom3('GOLD'),1,'% 3M')),'Inflation hedge / safe haven',spark(spk('GOLD'),'var(--yellow)'),'','GOLD')}
+      ${mc('GOLD PRICE','$'+fv((RT_LOADED && RT['GOLD_RT']?.price != null ? RT['GOLD_RT'].price : null),0),(RT_LOADED && RT['GOLD_RT']?.changePct != null ? (RT['GOLD_RT'].changePct >= 0 ? '+' : '') + RT['GOLD_RT'].changePct.toFixed(2) + '% 1D' : fc(mom3('GOLD'),1,'% 3M')),'Inflation hedge / safe haven',spark(spk('GOLD'),'var(--yellow)'),RT_LOADED&&RT['GOLD_RT']?.changePct!=null?(RT['GOLD_RT'].changePct>=0?'pos':'neg'):(mom3('GOLD')&&mom3('GOLD')>0?'pos':'neg'),'GOLD')}
       ${mc('COPPER PRICE',fv(val('COPPER'),2,'$'),fc(mom3('COPPER'),1,'% 3M'),'Cu/Au rising = growth optimism',spark(spk('COPPER'),'var(--orange)'),mom3('COPPER')&&mom3('COPPER')>0?'pos':'neg','COPPER')}
-      ${mc('US DOLLAR DXY',fv(val('DXY'),2),fc(chg('DXY'),2)+' DOD','Strong $ = tighter global liquidity',spark(spk('DXY'),'var(--cyan)'),'','DXY')}
+      ${mc('US DOLLAR DXY',fv(val('DXY'),2),fc(chg('DXY'),2)+' DOD','Strong $ = tighter global liquidity',spark(spk('DXY'),'var(--cyan)'),chg('DXY')!=null?(chg('DXY')>=0?'pos':'neg'):'info','DXY')}
     </div>
 
     ${sh('ADP PRIVATE PAYROLLS — INDEPENDENT ESTIMATE','RELEASES 2 DAYS BEFORE BLS NFP · WEEKLY PULSE AVAILABLE')}
@@ -4323,7 +4348,7 @@ function renderUnderwrite() {
   document.getElementById('tab-underwrite').innerHTML=`
     ${sh('LIVE UNDERWRITING ASSUMPTIONS')}
     <div class="g2">
-      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>CURRENT MARKET RATES — LIVE FRED</div>${freshnessTag('T10Y')}</div>
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>CURRENT MARKET RATES — ${RT_LOADED&&RT['T10Y_RT']?.price!=null?'LIVE RT':'FRED DAILY'}</div>${RT_LOADED&&RT['T10Y_RT']?'<span class="freshness fresh">'+rtAge('T10Y_RT')+'</span>':freshnessTag('T10Y')}</div>
         <table class="dt"><thead><tr><th>INSTRUMENT</th><th>LIVE RATE</th><th>UW USE</th></tr></thead><tbody>
           ${[['10Y Treasury',fv(t10,2,'%'),'Cap rate floor benchmark'],['Implied Cap Floor',fv(t10+1.5,2,'%'),'Min unlevered yield target'],['SOFR (overnight)',fv(sofr,2,'%'),'Floating rate base'],['Bridge (~SOFR+300)',fv(sofr+3.0,2,'%'),'Transitional / value-add'],['Agency Perm (~10Y+175)',fv(t10+1.75,2,'%'),'Fannie/Freddie stabilized'],['Debt Fund (~SOFR+350)',fv(sofr+3.5,2,'%'),'Non-agency / CRE CLO'],['Construction (~P+1)',fv(prime+1.0,2,'%'),'Construction loan'],['Core PCE YOY',fv(cpce,1,'%'),'Rent growth baseline']].map(([n,v,u])=>`<tr><td>${n}</td><td class="tdw">${v}</td><td class="tdl">${u}</td></tr>`).join('')}
         </tbody></table>
