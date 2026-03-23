@@ -71,6 +71,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .logo{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--green);letter-spacing:2px;}
 .logo span{color:var(--muted2);font-family:'JetBrains Mono',monospace;font-weight:400;font-size:9px;}
 .topbar-r{display:flex;align-items:center;gap:8px;font-size:9px;}
+.cpg-logo-wrap{display:flex;align-items:center;padding:2px 7px 2px 5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;margin-right:2px;}
+.cpg-logo-img{height:21px;width:auto;display:block;}
+.topbar-divider{width:1px;height:20px;background:var(--border2);margin:0 6px;flex-shrink:0;}
 .tbadge{border:1px solid var(--border2);padding:2px 7px;border-radius:2px;font-size:7px;letter-spacing:1px;color:var(--muted2);}
 .auto-badge{border:1px solid rgba(0,255,157,.3);padding:2px 7px;border-radius:2px;font-size:7px;letter-spacing:1px;color:var(--green);}
 #fetch-status{font-size:8px;color:var(--muted2);}
@@ -147,7 +150,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 .dt td{padding:7px 9px;border-bottom:1px solid rgba(26,35,56,.5);color:var(--text);}
 .dt tr:hover td{background:rgba(255,255,255,.012);}
 .dt tr:last-child td{border-bottom:none;}
-.tdp{color:var(--green);}.tdn{color:var(--red);}.tdw{color:var(--yellow);}.tdl{color:var(--muted2);font-size:9px;}.tdb{color:var(--blue);}.tdpur{color:var(--purple);}
+.tdp{color:var(--green);}.tdn{color:var(--red);}.tdw{color:var(--yellow);}.tdl{color:var(--muted2);font-size:9px;text-align:left;}.tdb{color:var(--blue);}.tdpur{color:var(--purple);}
 
 /* ══ GAUGE ══ */
 .gr{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
@@ -294,7 +297,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 .toast.info{border-left:3px solid var(--blue);}
 @keyframes toastin{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
 
-.tnew{font-size:6px;background:var(--green);color:#000;padding:1px 4px;border-radius:2px;margin-left:4px;font-weight:700;letter-spacing:.5px;}
+/* .tnew duplicate removed — original at line 89 is the authoritative definition */
 .news-grid{display:flex;flex-direction:column;gap:8px;}
 .news-card{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:12px 14px;transition:border-color .15s;}
 .news-card:hover{border-color:var(--border3);}
@@ -306,7 +309,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 .news-title{font-size:12px;color:var(--white);line-height:1.5;margin-bottom:4px;font-weight:500;}
 .news-desc{font-size:10px;color:var(--muted2);line-height:1.6;}
 .tdr{text-align:right;}
-.tdl{text-align:left;}
+/* .tdl consolidated with definition at line 153 — both rules now merged there */
 
 
 /* ── KPI TOOLTIPS ── */
@@ -361,7 +364,6 @@ svg.sp{width:100%;height:36px;overflow:visible;}
       <div style="font-size:7px;color:var(--cyan);margin-bottom:10px">★ OBSIDIAN recommended — Bloomberg-grade institutional. Can be changed anytime via ◑ THEME.</div>
       <div id="theme-picker-modal" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
-    </div>
     <div class="setup-test-row">
       <div class="setup-test-indicator" id="test-indicator"></div>
       <span class="setup-test-label" id="test-label">Enter your FRED key to connect</span>
@@ -370,10 +372,10 @@ svg.sp{width:100%;height:36px;overflow:visible;}
     <button class="setup-btn" id="setup-go-btn" onclick="testAndLaunch()">VERIFY KEYS &amp; LAUNCH TERMINAL</button>
     <div class="setup-note">
       All 6 keys are free — total setup time under 5 minutes. Keys stored only in your browser localStorage.<br>
-      FRED, BLS, Census, Scorecard, and Finnhub connect directly (CORS). NewsAPI requires a CORS proxy (free plan).<br>
-      IPEDS · Yahoo Finance · Zillow ZORI · Apartment List · CME FedWatch (computed free) require no key.
+      BLS, Census, Scorecard, and Finnhub connect directly. FRED and NewsAPI use CORS proxies.<br>
+      IPEDS · Yahoo Finance · Zillow ZORI · CME FedWatch (computed free) require no key.
     </div>
-  </div></div>
+  </div>
 </div>
 
 <!-- ══ REGIME BANNER ══ -->
@@ -414,6 +416,10 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 <!-- ══ TOPBAR ══ -->
 <div class="topbar">
   <div class="topbar-l" style="display:flex;align-items:center;gap:10px;">
+    <div class="cpg-logo-wrap" style="background:none;border:none;padding:0">
+      <img class="cpg-logo-img" src="data:image/png;base64,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" alt="Centurion Property Group">
+    </div>
+    <div class="topbar-divider"></div>
     <div class="logo">SH·MACRO·TERMINAL <span>// STUDENT HOUSING INTELLIGENCE v4.0 · REGIME ENGINE</span></div>
   </div>
   <div class="topbar-r">
@@ -470,8 +476,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 
 
 <script>
-
-
+'use strict';
 
 
 
@@ -730,8 +735,6 @@ function showThemePicker() {
 
 
 
-'use strict';
-
 // ── HTML SANITIZER — prevents XSS from external data ──
 function esc(str) {
   if (str == null) return '';
@@ -837,7 +840,7 @@ const SERIES = {
   INIT_CLAIMS:   {id:'ICSA',            freq:'weekly',    lim:52},
   CONT_CLAIMS:   {id:'CCSA',            freq:'weekly',    lim:52},
   ADP_MONTHLY:   {id:'ADPMNUSNERSA',    freq:'monthly',   lim:60},
-  ADP_WEEKLY:    {id:'ADPWNUSNERSA',    freq:'weekly',    lim:52},
+  // ADP_WEEKLY removed — ADPWNUSNERSA is not a public FRED series (ADP only publishes monthly NFP on FRED)
   JOLTS:         {id:'JTSJOL',          freq:'monthly',   lim:48},
   EMP_2024:      {id:'LNS12000036',     freq:'monthly',   lim:60},
   POP_2534:      {id:'LNU00000006',     freq:'monthly',   lim:60},
@@ -914,10 +917,10 @@ const SERIES = {
 
   // ── RESTORED / CORRECTED ──
   CHARGE_OFF:    {id:'CORBLACBS',       freq:'quarterly', lim:20},  // CRE charge-offs (bank, verified)
-  ISM_SVCS:      {id:'ANFCI',          freq:'weekly',    lim:104}, // NOTE: Maps to ANFCI, not ISM Services. Used as financial conditions proxy.
-  MULTIFAMILY:   {id:'HOUST5F',         freq:'monthly',   lim:60},  // 5+ unit starts (same as MF_STARTS, alias)
-
-  ANFCI:         {id:'ANFCI',          freq:'weekly',    lim:104},  // Adjusted NFCI (Chicago Fed, live 2026-03-13)
+  // ISM_SVCS removed (was duplicate of ANFCI — same FRED id). Use ANFCI key directly in renders.
+  // MULTIFAMILY removed (was duplicate of MF_STARTS — same FRED id HOUST5F). Use MF_STARTS in renders.
+  ANFCI:         {id:'ANFCI',          freq:'weekly',    lim:104},  // Adjusted NFCI (Chicago Fed)
+  LEADING_IDX:   {id:'USSLIND',        freq:'monthly',   lim:36},   // Conference Board Leading Economic Index
 }
 
 // ── STATIC DATA ──
@@ -963,7 +966,7 @@ const EXT_KEYS = {
 };
 
 // IPEDS via Urban Institute — no key required
-const IPEDS_BASE   = 'https://educationdata.urban.org/api/v1/schools/ipeds/';
+const IPEDS_BASE   = 'https://educationdata.urban.org/api/v1/college-university/ipeds/';
 const BLS_BASE     = 'https://api.bls.gov/publicAPI/v2/timeseries/data/';
 const CENSUS_BASE  = 'https://api.census.gov/data/';
 const NEWS_BASE    = 'https://newsapi.org/v2/everything';
@@ -1029,21 +1032,44 @@ let CENSUS_LOADED = false;
 // Direct call — BLS sends CORS headers
 // ════════════════════════════════════════════════════
 async function fetchBLS() {
-  if (!EXT_KEYS.BLS) return;
   const currentYear = new Date().getFullYear();
+  // Without a key: 25 daily queries, 2-year window (sufficient for terminal)
+  // With a key: 500 daily queries, 10-year window — but key must be sent directly (not via proxy)
+  const hasKey = !!EXT_KEYS.BLS;
   const body = {
     seriesid: Object.values(BLS_SERIES),
-    startyear: String(currentYear - 3),
+    startyear: String(currentYear - (hasKey ? 3 : 2)),
     endyear:   String(currentYear),
-    registrationkey: EXT_KEYS.BLS,
+    ...(hasKey ? { registrationkey: EXT_KEYS.BLS } : {}),
   };
   try {
-    const resp = await fetch(BLS_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const j = await resp.json();
+    // Try direct first (works if BLS sends CORS headers), then proxy fallback
+    let j;
+    try {
+      const resp = await fetch(BLS_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(10000),
+      });
+      j = await resp.json();
+      // If key causes REQUEST_NOT_PROCESSED via proxy, retry without key
+      if (j.status !== 'REQUEST_SUCCEEDED' && hasKey) {
+        const bodyNoKey = { seriesid: body.seriesid, startyear: String(currentYear - 2), endyear: String(currentYear) };
+        const r2 = await fetch(BLS_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyNoKey), signal: AbortSignal.timeout(10000) });
+        j = await r2.json();
+      }
+    } catch(_) {
+      // POST via corsproxy — send WITHOUT key (key causes REQUEST_NOT_PROCESSED through proxy)
+      const bodyNoKey = { seriesid: body.seriesid, startyear: String(currentYear - 2), endyear: String(currentYear) };
+      const resp = await fetch('https://corsproxy.io/?' + encodeURIComponent(BLS_BASE), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyNoKey),
+        signal: AbortSignal.timeout(12000),
+      });
+      j = await resp.json();
+    }
     if (j.status !== 'REQUEST_SUCCEEDED') throw new Error(j.message || 'BLS error');
     j.Results.series.forEach(s => {
       const key = Object.keys(BLS_SERIES).find(k => BLS_SERIES[k] === s.seriesID);
@@ -1084,31 +1110,54 @@ function blsSpk(key, fredKey, n=24) {
 // ════════════════════════════════════════════════════
 // IPEDS FETCH — Urban Institute API, no key needed
 // ════════════════════════════════════════════════════
+// Safe JSON fetch — returns parsed JSON or null if response is HTML/error
+async function safeFetchJSON(url, timeoutMs = 8000) {
+  const proxies = [
+    { fn: u => u, wrapped: false },                                              // direct
+    { fn: u => 'https://corsproxy.io/?' + encodeURIComponent(u), wrapped: false },
+    { fn: u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u), wrapped: true },
+  ];
+  for (const proxy of proxies) {
+    try {
+      const resp = await fetch(proxy.fn(url), { signal: AbortSignal.timeout(timeoutMs) });
+      if (!resp.ok) continue;
+      const text = await resp.text();
+      if (text.trim().startsWith('<')) continue;        // HTML error page — skip
+      const parsed = JSON.parse(text);
+      if (proxy.wrapped && parsed.contents !== undefined) {
+        const inner = parsed.contents;
+        if (typeof inner === 'string' && inner.trim().startsWith('<')) continue;
+        return typeof inner === 'string' ? JSON.parse(inner) : inner;
+      }
+      return parsed;
+    } catch(_) { continue; }
+  }
+  return null;
+}
+
 async function fetchIPEDS() {
-  const latestYear = new Date().getFullYear() - 2; // IPEDS runs ~18 months behind
-  const unitids = Object.values(UNI_IDS);
+  // IPEDS data lags ~2 years; enrollment lags further than characteristics
+  const charYear = new Date().getFullYear() - 2;
+  const enrollYear = new Date().getFullYear() - 3; // enrollment often 1yr behind characteristics
 
   for (const [name, unitid] of Object.entries(UNI_IDS)) {
     try {
-      // Enrollment
-      const enrollUrl = `${IPEDS_BASE}enrollment-fall-headcount/${latestYear}/?unitid=${unitid}&fields=unitid,year,level,sex,enrollment_status,enrollment`;
-      const r1 = await fetch(enrollUrl);
-      const j1 = await r1.json();
+      // Enrollment — use fall-enrollment endpoint (updated API path)
+      const enrollUrl = `${IPEDS_BASE}fall-enrollment/${enrollYear}/?unitid=${unitid}`;
+      const j1 = await safeFetchJSON(enrollUrl) || { results: [] };
 
-      // Institutional characteristics (housing capacity)
-      const charUrl = `${IPEDS_BASE}institutional-characteristics/${latestYear}/?unitid=${unitid}&fields=unitid,year,room,roomcap,board,boardamt,tuitionin,tuitionout`;
-      const r2 = await fetch(charUrl);
-      const j2 = await r2.json();
+      // Institutional characteristics (housing capacity, tuition)
+      const charUrl = `${IPEDS_BASE}institutional-characteristics/${charYear}/?unitid=${unitid}`;
+      const j2 = await safeFetchJSON(charUrl) || { results: [] };
 
-      // Retention & graduation
-      const retUrl = `${IPEDS_BASE}outcome-measures/${latestYear}/?unitid=${unitid}&fields=unitid,year,retention_rate_ht,retention_rate_pt`;
-      const r3 = await fetch(retUrl);
-      const j3 = await r3.json();
+      // Outcome measures (graduation/retention)
+      const retUrl = `${IPEDS_BASE}outcome-measures/${enrollYear}/?unitid=${unitid}`;
+      const j3 = await safeFetchJSON(retUrl) || { results: [] };
 
       IPEDS_DATA[unitid] = {
         name,
-        year: latestYear,
-        enrollment: j1.results?.[0] ? j1.results.reduce((s,r) => s + (r.enrollment||0), 0) : null,
+        year: charYear,
+        enrollment: j1.results?.length ? j1.results.reduce((s,r) => s + (r.enrollment||0), 0) : null,
         roomCap:    j2.results?.[0]?.roomcap || null,
         roomOccup:  j2.results?.[0]?.room    || null,
         tuitionIn:  j2.results?.[0]?.tuitionin  || null,
@@ -1118,7 +1167,7 @@ async function fetchIPEDS() {
       await sleep(150); // be gentle with the API
     } catch(e) {
       console.warn(`IPEDS failed for ${name}:`, e.message);
-      IPEDS_DATA[unitid] = { name, year: latestYear, error: e.message };
+      IPEDS_DATA[unitid] = { name, year: charYear, error: e.message };
     }
   }
   IPEDS_LOADED = true;
@@ -1252,7 +1301,7 @@ async function fetchZillow() {
       break;
     } catch(e) { continue; }
   }
-  if (!csvText) throw new Error('All Zillow proxies failed');
+  if (!csvText) { console.warn('Zillow ZORI: all proxies failed or CSV unavailable'); return; }
 
   try {
     const rows = parseCSV(csvText);
@@ -1283,78 +1332,6 @@ async function fetchZillow() {
   }
 }
 
-// ════════════════════════════════════════════════════
-// APARTMENT LIST NATIONAL RENT DATA
-// Free CSV — no key required
-// National index + city-level estimates
-// Updated monthly
-// ════════════════════════════════════════════════════
-
-const APTLIST_URL = 'https://www.apartmentlist.com/research/data/al_national_rent_estimates.csv';
-
-let APTLIST_DATA   = { national: [], cities: {} };
-let APTLIST_LOADED = false;
-
-async function fetchApartmentList() {
-  const cacheKey = 'shmacro_aptlist_v1';
-  const cached = (() => {
-    try {
-      const raw = localStorage.getItem(cacheKey);
-      if (!raw) return null;
-      const p = JSON.parse(raw);
-      if (Date.now() - p.ts < 86400000) return p.data;
-    } catch(e) {}
-    return null;
-  })();
-
-  if (cached) {
-    APTLIST_DATA = cached;
-    APTLIST_LOADED = true;
-    return;
-  }
-
-  // AptList CSV — multi-proxy like Zillow
-  const APTLIST_PROXIES = [
-    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),  // ✓ confirmed working for CSV
-    u => 'https://corsproxy.io/?' + encodeURIComponent(u),
-    u => 'https://thingproxy.freeboard.io/fetch/' + u,
-    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  ];
-
-  let aptCsvText = null;
-  for (const proxyFn of APTLIST_PROXIES) {
-    try {
-      const resp = await fetch(proxyFn(APTLIST_URL), { signal: AbortSignal.timeout(12000) });
-      if (!resp.ok) continue;
-      const text = await resp.text();
-      if (text.trim().startsWith('{') || text.trim().startsWith('<')) continue;
-      if (!text.includes(',')) continue;
-      aptCsvText = text;
-      break;
-    } catch(e) { continue; }
-  }
-  if (!aptCsvText) throw new Error('All AptList proxies failed');
-
-  try {
-    const rows = parseCSV(aptCsvText);
-    // Expected columns: year, month, national_median_1br, national_median_2br, ...
-    const national = rows
-      .map(r => ({
-        date: (r['year'] || r['Year'] || '') + '-' + String(r['month'] || r['Month'] || '').padStart(2, '0') + '-01',
-        rent1br: parseFloat(r['national_median_1br'] || r['rent_1br'] || 0),
-        rent2br: parseFloat(r['national_median_2br'] || r['rent_2br'] || 0),
-      }))
-      .filter(r => r.date.length === 10 && r.rent1br > 0)
-      .sort((a, b) => b.date.localeCompare(a.date));
-
-    APTLIST_DATA = { national };
-    APTLIST_LOADED = true;
-    try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: APTLIST_DATA })); } catch(e) {}
-    console.log('Apartment List loaded:', national.length, 'months');
-  } catch(e) {
-    console.warn('Apartment List fetch failed:', e.message);
-  }
-}
 
 
 
@@ -1372,9 +1349,11 @@ async function fetchScorecard() {
       + `&fields=${encodeURIComponent(SCORECARD_FIELDS)}`
       + `&per_page=100`;
 
-    const resp = await fetch(url);
+    const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const j = await resp.json();
+    const text = await resp.text();
+    if (text.trim().startsWith('<')) throw new Error('HTML response — API may be down');
+    const j = JSON.parse(text);
 
     if (!j.results?.length) throw new Error('No results returned');
 
@@ -1429,7 +1408,10 @@ async function fetchScorecard() {
 // CENSUS ACS FETCH — no key needed for basic queries
 // ════════════════════════════════════════════════════
 async function fetchCensus() {
-  const year = String(new Date().getFullYear() - 1); // ACS 1-year publishes ~September for prior year
+  // ACS 1-year publishes in September for prior year; so in 2026, latest available is 2024 (Sep release)
+  // Before September, fall back another year. Use currentYear - 2 as safe default.
+  const now = new Date();
+  const year = String(now.getMonth() >= 8 ? now.getFullYear() - 1 : now.getFullYear() - 2);
   const vars = 'NAME,B01003_001E,B19013_001E,B25003_002E,B25003_003E,B01001_007E,B01001_008E,B01001_009E,B01001_010E,B01001_031E,B01001_032E,B01001_033E,B01001_034E';
   // B01001_007-010E = male 18-24, B01001_031-034E = female 18-24
 
@@ -1437,9 +1419,45 @@ async function fetchCensus() {
     try {
       let url = `${CENSUS_BASE}${year}/acs/acs1?get=${vars}&for=metropolitan+statistical+area/micropolitan+statistical+area:${fips}`;
       if (EXT_KEYS.CENSUS) url += `&key=${EXT_KEYS.CENSUS}`;
-      const r = await fetch(url);
-      const rows = await r.json();
-      if (!rows || rows.length < 2) throw new Error('No data');
+      // Census API may block browser CORS on GitHub Pages — use proxy cascade
+      let rows = null;
+
+      // Attempt 1: direct (works when Census sends CORS headers)
+      try {
+        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (r.ok) {
+          const text = await r.text();
+          if (text.trim().startsWith('[')) rows = JSON.parse(text);
+        }
+      } catch(_) { /* CORS blocked — expected on GitHub Pages */ }
+
+      // Attempt 2-4: proxy cascade (same pattern as FRED fetcher)
+      if (!rows) {
+        const proxies = [
+          { url: 'https://corsproxy.io/?' + encodeURIComponent(url), wrapped: false },
+          { url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(url), wrapped: true },
+          { url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), wrapped: false },
+        ];
+        for (const proxy of proxies) {
+          if (rows) break;
+          try {
+            const pr = await fetch(proxy.url, { signal: AbortSignal.timeout(10000) });
+            if (!pr.ok) continue;
+            if (proxy.wrapped) {
+              const pw = await pr.json();
+              const contents = pw.contents || '';
+              if (!contents.trim().startsWith('[')) continue; // HTML error page — skip
+              rows = JSON.parse(contents);
+            } else {
+              const text = await pr.text();
+              if (!text.trim().startsWith('[')) continue; // HTML error page — skip
+              rows = JSON.parse(text);
+            }
+          } catch(_) { continue; }
+        }
+      }
+
+      if (!rows || rows.length < 2) throw new Error('No data — all proxies failed');
       const [headers, data] = [rows[0], rows[1]];
       const get = (field) => { const i = headers.indexOf(field); return i>=0 ? parseInt(data[i])||0 : 0; };
 
@@ -1453,7 +1471,9 @@ async function fetchCensus() {
         ownerUnits:  get('B25003_002E'),
         renterUnits: get('B25003_003E'),
         pop1824:     pop1824,
-        renterPct:   Math.round(get('B25003_003E') / (get('B25003_002E') + get('B25003_003E')) * 100),
+        renterPct:   (get('B25003_002E') + get('B25003_003E')) > 0
+                       ? Math.round(get('B25003_003E') / (get('B25003_002E') + get('B25003_003E')) * 100)
+                       : 0,
       };
       await sleep(100);
     } catch(e) {
@@ -1521,9 +1541,12 @@ async function fetchYahooFallback(missing) {
       try {
         const resp = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
         if (!resp.ok) continue;
-        const wrapper = await resp.json();
+        const text = await resp.text();
+        if (text.trim().startsWith('<')) continue; // HTML error page — skip
+        const wrapper = JSON.parse(text);
         const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
-        const j = JSON.parse(raw);
+        if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+        const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
         const meta = j?.chart?.result?.[0]?.meta;
         if (!meta?.regularMarketPrice) continue;
         const price     = meta.regularMarketPrice;
@@ -1548,109 +1571,57 @@ async function fetchYahooFallback(missing) {
 }
 
 async function fetchYahooAll() {
-  // Fetch ALL symbols in a single Yahoo Finance v7 quote request
-  // Use CORS proxies as primary — Yahoo blocks direct browser requests
-  const syms = Object.values(YAHOO_SYMBOLS).join(',');
-
-  const yahooUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols='
-    + encodeURIComponent(syms)
-    + '&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketPreviousClose,regularMarketDayHigh,regularMarketDayLow,regularMarketTime';
-
-  // Proxies to try in order
-  const proxies = [
-    'https://api.allorigins.win/get?url=' + encodeURIComponent(yahooUrl),
-    'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
-    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(yahooUrl),
-    'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
-  ];
-
-  for (const proxyUrl of proxies) {
-    try {
-      const resp = await fetch(proxyUrl, { signal: (()=>{const c=new AbortController();setTimeout(()=>c.abort(),10000);return c.signal;})() });
-      if (!resp.ok) continue;
-      const wrapper = await resp.json();
-      // allorigins wraps in {contents}, others return raw
-      // allorigins wraps in {contents:"..."}, others return the data directly
-      let raw;
-      if (wrapper.contents !== undefined) {
-        raw = wrapper.contents; // allorigins format
-      } else if (wrapper.quoteResponse) {
-        raw = JSON.stringify(wrapper); // already parsed Yahoo response
-      } else if (typeof wrapper === 'string') {
-        raw = wrapper; // raw string
-      } else {
-        raw = JSON.stringify(wrapper);
-      }
-      const j = JSON.parse(raw);
-      const quotes = j?.quoteResponse?.result;
-      if (!quotes?.length) continue;
-
-      // Map results back to our RT keys — track which loaded OK
-      const _loadedSymKeys = new Set();
-      quotes.forEach(q => {
-        const key = Object.keys(YAHOO_SYMBOLS).find(k => YAHOO_SYMBOLS[k] === q.symbol);
-        if (!key) return;
-        _loadedSymKeys.add(key);
-        const price    = q.regularMarketPrice;
-        const prevClose= q.regularMarketPreviousClose || price;
-        const change   = q.regularMarketChange ?? (price - prevClose);
-        const changePct= q.regularMarketChangePercent ?? (change/prevClose*100);
-        RT[key] = {
-          price:     parseFloat((price||0).toFixed(4)),
-          change:    parseFloat((change||0).toFixed(4)),
-          changePct: parseFloat((changePct||0).toFixed(3)),
-          prevClose: parseFloat((prevClose||0).toFixed(4)),
-          high:      q.regularMarketDayHigh || price,
-          low:       q.regularMarketDayLow  || price,
-          timestamp: q.regularMarketTime ? new Date(q.regularMarketTime * 1000) : new Date(),
-          symbol:    q.symbol,
-        };
-      });
-      // Fire fallback for any symbols not in batch response
-      const _missingKeys = Object.keys(YAHOO_SYMBOLS).filter(k => !_loadedSymKeys.has(k));
-      if (_missingKeys.length > 0) {
-        fetchYahooFallback(_missingKeys.map(k => ({ k, sym: YAHOO_SYMBOLS[k] }))).catch(()=>{});
-      }
-      return true; // success
-    } catch(e) {
-      console.warn('Yahoo proxy failed:', proxyUrl.slice(0,60), e.message);
-      // Log details for debugging
-      if (typeof window !== 'undefined' && window.RT_DEBUG) {
-        window.RT_ERRORS = window.RT_ERRORS || [];
-        window.RT_ERRORS.push({proxy: proxyUrl.slice(0,60), err: e.message, time: new Date().toISOString()});
-      }
-    }
-  }
-
-  // All proxies failed — try individual v8 chart calls per symbol as last resort
-  console.warn('All Yahoo batch proxies failed, trying individual chart calls...');
+  // Yahoo v7 batch quote endpoint is deprecated/blocked.
+  // Use v8/chart per-symbol with parallel requests via CORS proxies.
+  const entries = Object.entries(YAHOO_SYMBOLS);
+  const BATCH = 4; // fetch 4 symbols at a time to avoid proxy rate limits
   let anySuccess = false;
-  for (const [key, sym] of Object.entries(YAHOO_SYMBOLS)) {
-    try {
-      const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym) + '?interval=1d&range=5d';
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl);
-      const resp = await fetch(proxyUrl, { signal: (()=>{const c=new AbortController();setTimeout(()=>c.abort(),8000);return c.signal;})() });
-      if (!resp.ok) continue;
-      const wrapper = await resp.json();
-      const j = JSON.parse(wrapper.contents || '{}');
-      const meta = j?.chart?.result?.[0]?.meta;
-      if (!meta) continue;
-      const price     = meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose || meta.previousClose || price;
-      RT[key] = {
-        price:     parseFloat((price||0).toFixed(4)),
-        change:    parseFloat(((price-prevClose)||0).toFixed(4)),
-        changePct: parseFloat((((price-prevClose)/prevClose*100)||0).toFixed(3)),
-        prevClose: parseFloat((prevClose||0).toFixed(4)),
-        high:      meta.regularMarketDayHigh || price,
-        low:       meta.regularMarketDayLow  || price,
-        timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date(),
-        symbol:    sym,
-      };
-      anySuccess = true;
-      await sleep(150);
-    } catch(e) { /* continue */ }
+
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const batch = entries.slice(i, i + BATCH);
+    const results = await Promise.allSettled(batch.map(([key, sym]) => {
+      const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+        + encodeURIComponent(sym) + '?interval=1d&range=5d';
+      const proxies = [
+        'https://corsproxy.io/?' + encodeURIComponent(chartUrl),
+        'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl),
+      ];
+      return (async () => {
+        for (const proxyUrl of proxies) {
+          try {
+            const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+            if (!resp.ok) continue;
+            const text = await resp.text();
+            if (text.trim().startsWith('<')) continue; // HTML error page — skip
+            const wrapper = JSON.parse(text);
+            const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
+            if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+            const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
+            const meta = j?.chart?.result?.[0]?.meta;
+            if (!meta?.regularMarketPrice) continue;
+            const price     = meta.regularMarketPrice;
+            const prevClose = meta.chartPreviousClose || meta.previousClose || price;
+            const change    = price - prevClose;
+            RT[key] = {
+              price:     parseFloat((price||0).toFixed(4)),
+              change:    parseFloat((change||0).toFixed(4)),
+              changePct: parseFloat(((change/prevClose*100)||0).toFixed(3)),
+              prevClose: parseFloat((prevClose||0).toFixed(4)),
+              high:      meta.regularMarketDayHigh || price,
+              low:       meta.regularMarketDayLow  || price,
+              timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date(),
+              symbol:    sym,
+            };
+            return true;
+          } catch(e) { continue; }
+        }
+        return false;
+      })();
+    }));
+    results.forEach(r => { if (r.status === 'fulfilled' && r.value) anySuccess = true; });
+    if (i + BATCH < entries.length) await sleep(100);
   }
+  if (anySuccess) console.log('Yahoo RT loaded:', Object.keys(RT).length, 'symbols');
   return anySuccess;
 }
 
@@ -1710,17 +1681,33 @@ const FEDWATCH_SYMBOLS = {};
   FEDWATCH_SYMBOLS[_fwMonthNames[m]+' '+_fwYear] = 'ZQ'+_fwMonthCodes[m]+_fwYY+'.CBT';
 });
 
-// FOMC meeting dates — generate approximate dates dynamically
-// 8 meetings/year, roughly: Jan, Mar, May, Jun, Jul, Sep, Nov, Dec (3rd Wed of month)
+// FOMC meeting dates — hardcoded from official Fed calendar, fallback algorithm for future years
+// Source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+const FOMC_HARDCODED = {
+  2025: [
+    '2025-01-29','2025-03-19','2025-05-07','2025-06-18',
+    '2025-07-30','2025-09-17','2025-10-29','2025-12-10'
+  ],
+  2026: [
+    '2026-01-28','2026-03-18','2026-04-29','2026-06-17',
+    '2026-07-29','2026-09-16','2026-10-28','2026-12-09'
+  ]
+};
 function generateFOMCDates(year) {
-  const months = [0, 2, 4, 5, 6, 8, 10, 11]; // 0-indexed: Jan,Mar,May,Jun,Jul,Sep,Nov,Dec
-  return months.map(m => {
-    // 3rd Wednesday of each FOMC month
-    const d = new Date(year, m, 1);
-    let wedCount = 0;
-    while (wedCount < 3) { if (d.getDay() === 3) wedCount++; if (wedCount < 3) d.setDate(d.getDate() + 1); }
-    const label = d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-    return { date: d.toISOString().split('T')[0], label };
+  // Use hardcoded dates if available; otherwise approximate (Apr/Oct pattern)
+  if (FOMC_HARDCODED[year]) {
+    return FOMC_HARDCODED[year].map(iso => {
+      const d = new Date(iso + 'T12:00:00');
+      return { date: iso, label: d.toLocaleDateString('en-US', {month:'short', day:'numeric'}) };
+    });
+  }
+  // Fallback: 8 meetings — Jan,Mar,Apr,Jun,Jul,Sep,Oct,Dec (last Tue/Wed pattern ~28th or ~18th)
+  const approxDays = [28, 18, 29, 17, 29, 16, 28, 9];
+  const months     = [0,  2,  3,  5,  6,  8,  9, 11];
+  return months.map((m, i) => {
+    const iso = `${year}-${String(m+1).padStart(2,'0')}-${String(approxDays[i]).padStart(2,'0')}`;
+    const d = new Date(iso + 'T12:00:00');
+    return { date: iso, label: d.toLocaleDateString('en-US', {month:'short', day:'numeric'}) };
   });
 }
 const _fomcYear = new Date().getFullYear();
@@ -1730,53 +1717,30 @@ let FEDWATCH_DATA   = [];   // [{label, date, impliedRate, holdPct, cutPct, hike
 let FEDWATCH_LOADED = false;
 
 async function fetchFedWatch() {
-  const allSymbols = Object.values(FEDWATCH_SYMBOLS).join(',');
-  const yahooUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols='
-    + encodeURIComponent(allSymbols)
-    + '&fields=regularMarketPrice,regularMarketTime,shortName';
-
-  const proxies = [
-    'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
-    'https://api.allorigins.win/get?url=' + encodeURIComponent(yahooUrl),
-    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(yahooUrl),
-    'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
-  ];
-
-  let quotes = null;
-  for (const proxy of proxies) {
-    try {
-      const resp = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
-      if (!resp.ok) continue;
-      const wrapper = await resp.json();
-      const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
-      const j = JSON.parse(raw);
-      quotes = j?.quoteResponse?.result;
-      if (quotes && quotes.length) break;
-    } catch(e) { /* try next proxy */ }
-  }
-
-  // If batch failed or partial, fetch each ZQ contract individually via v8
-  if (!quotes || quotes.length < Object.keys(FEDWATCH_SYMBOLS).length) {
-    const allSyms = Object.values(FEDWATCH_SYMBOLS);
-    const batchSyms = new Set((quotes||[]).map(q=>q.symbol));
-    const missing = allSyms.filter(s => !batchSyms.has(s));
-    for (const sym of missing) {
-      const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/'
-        + encodeURIComponent(sym) + '?interval=1d&range=5d';
-      for (const proxy of ['https://corsproxy.io/?' + encodeURIComponent(chartUrl),
-                            'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(chartUrl)]) {
-        try {
-          const resp = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
-          if (!resp.ok) continue;
-          const wrapper = await resp.json();
-          const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
-          const j = JSON.parse(raw);
-          const meta = j?.chart?.result?.[0]?.meta;
-          if (!meta?.regularMarketPrice) continue;
-          quotes = (quotes || []).concat([{ symbol: sym, regularMarketPrice: meta.regularMarketPrice }]);
-          break;
-        } catch(e) { continue; }
-      }
+  // Fetch ZQ futures prices via v8/chart (v7 batch is deprecated)
+  let quotes = [];
+  for (const [label, sym] of Object.entries(FEDWATCH_SYMBOLS)) {
+    const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+      + encodeURIComponent(sym) + '?interval=1d&range=5d';
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(chartUrl),
+      'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl),
+    ];
+    for (const proxy of proxies) {
+      try {
+        const resp = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+        if (!resp.ok) continue;
+        const text = await resp.text();
+        if (text.trim().startsWith('<')) continue; // HTML error page — skip
+        const wrapper = JSON.parse(text);
+        const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
+        if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+        const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
+        const meta = j?.chart?.result?.[0]?.meta;
+        if (!meta?.regularMarketPrice) continue;
+        quotes.push({ symbol: sym, regularMarketPrice: meta.regularMarketPrice });
+        break;
+      } catch(e) { continue; }
     }
   }
 
@@ -1916,9 +1880,11 @@ async function fetchFinnhubCalendar() {
     const toDate = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 days out
     const to    = toDate.toISOString().split('T')[0];
     const url   = `${FINNHUB_BASE}/calendar/economic?from=${from}&to=${to}&token=${key}`;
-    const resp  = await fetch(url);
+    const resp  = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const j = await resp.json();
+    const text = await resp.text();
+    if (text.trim().startsWith('<')) throw new Error('HTML response — Finnhub may be down');
+    const j = JSON.parse(text);
     // Filter to US high-impact events
     CALENDAR_DATA = (j.economicCalendar || [])
       .filter(e => e.country === 'US' && e.impact === 'high')
@@ -1984,9 +1950,9 @@ function renderRealtime() {
       <div class="vl">${desc}</div>
     </div>`;
     const price   = d.price;
-    const chg     = d.change;
+    const dayChg  = d.change;
     const chgPct  = d.changePct;
-    const isPos   = chg >= 0;
+    const isPos   = dayChg >= 0;
     // For yields: higher = worse for RE (show red). For prices/indices: higher = better (show green)
     const isYield = ['T10Y_RT','T3M_RT','T5Y_RT','T30Y_RT'].includes(key);
     const isMOVE  = key === 'MOVE_RT';
@@ -2006,7 +1972,7 @@ function renderRealtime() {
       </div>
       <div class="bv ${bvClass}">${price}${unit}</div>
       <div class="vc">
-        <span style="color:${chgColor}">${isPos?'+':''}${chg.toFixed(unit?3:2)}</span>
+        <span style="color:${chgColor}">${isPos?'+':''}${dayChg.toFixed(unit?3:2)}</span>
         <span style="color:${chgColor}">(${isPos?'+':''}${chgPct.toFixed(2)}%)</span>
         <span class="cm">today</span>
       </div>
@@ -2116,14 +2082,13 @@ function buildCalendarHtml() {
   // Build approximate upcoming dates for key releases
   const upcoming = [];
 
-  // FOMC: roughly every 6-7 weeks — approximate next few
-  const fomcMonths = [1,3,4,6,7,9,10,11]; // 0-indexed: Jan,Mar,Apr,Jun,Jul,Sep,Oct,Dec
-  for (const m of fomcMonths) {
-    const d = new Date(year, m, 18); // mid-month approx
-    if (d > today) { upcoming.push({date:d, name:'FOMC Meeting', impact:'CRITICAL', color:'var(--red)', desc:'Fed rate decision · market-moving'}); break; }
+  // FOMC: use authoritative hardcoded dates from generateFOMCDates()
+  const todayIso = today.toISOString().split('T')[0];
+  const fomcAll = generateFOMCDates(year).concat(generateFOMCDates(year+1));
+  const nextFOMC = fomcAll.find(x => x.date >= todayIso);
+  if (nextFOMC) {
+    upcoming.push({date:new Date(nextFOMC.date+'T12:00:00'), name:'FOMC Meeting', impact:'CRITICAL', color:'var(--red)', desc:'Fed rate decision · market-moving'});
   }
-  // Next year if needed
-  if (!upcoming.length) upcoming.push({date:new Date(year+1,1,18), name:'FOMC Meeting', impact:'CRITICAL', color:'var(--red)', desc:'Fed rate decision'});
 
   // CPI: ~2nd or 3rd week of month following reference month
   const nextCPI = new Date(year, month+1, 12);
@@ -2191,6 +2156,7 @@ async function fetchNews() {
         const resp = await fetch(proxyFn(url), { signal: AbortSignal.timeout(10000) });
         if (!resp.ok) continue;
         const text = await resp.text();
+        if (text.trim().startsWith('<')) continue; // HTML error page — skip proxy
         // corsproxy may return double-encoded or direct
         const parsed = JSON.parse(text);
         // allorigins wraps in {contents}
@@ -2227,7 +2193,7 @@ function saveExtKeys() {
   if (saved) saved.textContent = '✓ Keys saved — reload to apply';
   // Reload external data with new keys
   if (news   && !NEWS_LOADED)   fetchNews().then(() => { if (DONE['news'])   renderNews(); });
-  if (bls    && !BLS_LOADED)    fetchBLS().then(()  => { reRenderAll(); });
+  if (bls)   fetchBLS().then(() => { reRenderAll(); });
   if (census  && !CENSUS_LOADED)  fetchCensus().then(() => { if (DONE['markets2'])  renderMarkets2(); });
   if (finnhub   && !CALENDAR_LOADED)  fetchFinnhubCalendar().then(() => { if (DONE['realtime'])      renderRealtime(); });
   if (EXT_KEYS.SCORECARD && !SCORECARD_LOADED) fetchScorecard().then(() => { if (DONE['universities']) renderUniversities(); });
@@ -2464,13 +2430,6 @@ function renderMarkets2() {
     const pop1824    = census?.pop1824;
     const renterUnits= census?.renterUnits;
 
-    // Derived metrics
-    const enrollment = mkt ? (MKTS.find(m=>m.city===city)?.enrollment || null) : null;
-    const censusEnroll = Object.entries(UNI_IDS).find(([name]) =>
-      MKTS.find(m => m.city === city && name.toLowerCase().includes(m.univ?.toLowerCase()?.split(' ')?.[0]||''))
-    );
-    const uniEnroll = censusEnroll ? null : null; // from IPEDS_DATA if loaded
-
     return `<div class="mc2">
       <div class="mc-hd">
         <div>
@@ -2481,7 +2440,7 @@ function renderMarkets2() {
           ${census&&!err ? '● CENSUS LIVE' : err ? '● ERROR' : '● LOADING'}
         </div>
       </div>
-      ${err ? `<div style="font-size:9px;color:var(--red)">Census error: ${err}</div>` : `
+      ${err ? `<div style="font-size:9px;color:var(--red)">Census error: ${esc(err)}</div>` : `
       <div class="mc-rows">
         <div class="mc-row"><span class="mc-rl">MSA Population</span><span>${pop ? (pop/1000).toFixed(0)+'K' : '--'}</span></div>
         <div class="mc-row"><span class="mc-rl">Median HH Income</span><span style="color:var(--green)">${income ? '$'+(income/1000).toFixed(0)+'K' : '--'}</span></div>
@@ -2585,11 +2544,9 @@ async function fredFetch(seriesKey, forceRefresh=false) {
     return j;
   }
 
-  // FRED supports CORS from http/https origins, but file:// origins send null Origin header
-  // which gets blocked. Only try direct when served from a real server.
-  const isFileProtocol = location.protocol === 'file:';
+  // FRED API returns 503 from browser origins (GitHub Pages, etc.) — direct CORS not supported.
+  // Use proxy cascade: allorigins (wraps in {contents}), then corsproxy/codetabs/thingproxy (raw).
   const attempts = [
-    ...(!isFileProtocol ? [() => tryFetch(fredUrl, false, 'direct')] : []),
     () => tryFetch('https://api.allorigins.win/get?url='+encodeURIComponent(fredUrl), true, 'allorigins'),
     () => tryFetch('https://corsproxy.io/?'+encodeURIComponent(fredUrl), false, 'corsproxy'),
     () => tryFetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(fredUrl), false, 'codetabs'),
@@ -2645,7 +2602,7 @@ async function fetchAll(force=false) {
 
   setStatus(`FETCHING 0/${toFetch.length}...`, 'var(--yellow)');
 
-  const BATCH = 8; // 147 series / 8 = ~19 batches
+  const BATCH = 8; // ~129 series / 8 = ~17 batches
   let done = 0;
   for (let i = 0; i < toFetch.length; i += BATCH) {
     const batch = toFetch.slice(i, i+BATCH);
@@ -2699,9 +2656,9 @@ function showSettings() {
     'bls-key-input':       localStorage.getItem('bls_key')        || '',
     'census-key-input':    localStorage.getItem('census_key')     || '',
   };
-  Object.entries(fields).forEach(([id, val]) => {
+  Object.entries(fields).forEach(([id, savedVal]) => {
     const el = document.getElementById(id);
-    if (el) el.value = val;
+    if (el) el.value = savedVal;
   });
   // Inject theme picker into the modal if not already present
   const themeContainer = document.getElementById('theme-picker-modal');
@@ -2746,10 +2703,7 @@ async function testAndLaunch() {
       return;
     }
   }
-  if (!key || key.length < 8) {
-    document.getElementById('setup-err').textContent = 'Please enter a valid FRED API key.';
-    return;
-  }
+  // FRED key already validated in requiredKeys loop above
   const btn = document.getElementById('setup-go-btn');
   const ind = document.getElementById('test-indicator');
   const lbl = document.getElementById('test-label');
@@ -2775,7 +2729,6 @@ async function testAndLaunch() {
 
   const fredUrl = FRED_BASE + '?series_id=DGS10&api_key=' + encodeURIComponent(key) + '&file_type=json&sort_order=desc&limit=1';
   const methods = [
-    ...(location.protocol !== 'file:' ? [{ label:'direct (CORS)', fn: () => tryUrl(fredUrl, false) }] : []),
     { label:'allorigins proxy', fn: () => tryUrl('https://api.allorigins.win/get?url='+encodeURIComponent(fredUrl), true) },
     { label:'corsproxy', fn: () => tryUrl('https://corsproxy.io/?'+encodeURIComponent(fredUrl), false) },
   ];
@@ -2790,14 +2743,14 @@ async function testAndLaunch() {
       FRED_KEY = key;
       localStorage.setItem('shmacro_fred_key', key);
       // Save all optional keys entered on launch screen
-      const newsVal    = document.getElementById('news-key-input')?.value.trim();
-      const finnhubVal = document.getElementById('finnhub-key-input')?.value.trim();
-      const blsVal     = document.getElementById('bls-key-input')?.value.trim();
-      const censusVal  = document.getElementById('census-key-input')?.value.trim();
-      if (newsVal)    { localStorage.setItem('newsapi_key',   newsVal);    EXT_KEYS.NEWS    = newsVal; }
-      if (finnhubVal) { localStorage.setItem('finnhub_key',  finnhubVal); EXT_KEYS.FINNHUB = finnhubVal; }
-      if (blsVal)     { localStorage.setItem('bls_key',      blsVal);     EXT_KEYS.BLS     = blsVal; }
-      if (censusVal)  { localStorage.setItem('census_key',   censusVal);  EXT_KEYS.CENSUS   = censusVal; }
+      const newsKeyVal    = document.getElementById('news-key-input')?.value.trim();
+      const finnhubKeyVal = document.getElementById('finnhub-key-input')?.value.trim();
+      const blsKeyVal     = document.getElementById('bls-key-input')?.value.trim();
+      const censusKeyVal  = document.getElementById('census-key-input')?.value.trim();
+      if (newsKeyVal)    { localStorage.setItem('newsapi_key',   newsKeyVal);    EXT_KEYS.NEWS    = newsKeyVal; }
+      if (finnhubKeyVal) { localStorage.setItem('finnhub_key',  finnhubKeyVal); EXT_KEYS.FINNHUB = finnhubKeyVal; }
+      if (blsKeyVal)     { localStorage.setItem('bls_key',      blsKeyVal);     EXT_KEYS.BLS     = blsKeyVal; }
+      if (censusKeyVal)  { localStorage.setItem('census_key',   censusKeyVal);  EXT_KEYS.CENSUS   = censusKeyVal; }
       const scorecardVal = document.getElementById('scorecard-key-input')?.value.trim();
       if (scorecardVal) { localStorage.setItem('scorecard_key', scorecardVal); EXT_KEYS.SCORECARD = scorecardVal; }
       setTimeout(() => {
@@ -2946,7 +2899,6 @@ const KPI_TIPS = {
   U6RATE:       {def:"U-6 Underemployment Rate. Broader measure including part-timers and discouraged workers. Always ~2x U-3 headline rate.", src:"BLS / FRED: U6RATE"},
   CIVPART:      {def:"Labor Force Participation Rate. Low participation = hidden slack. Rising = more workers, potentially more renters.", src:"BLS / FRED: CIVPART"},
   ADP_MONTHLY:  {def:"ADP National Employment Report — monthly private payroll estimate. Releases 2 days before BLS NFP. Large divergences precede revisions.", src:"ADP Research/Stanford / FRED: ADPMNUSNERSA"},
-  ADP_WEEKLY:   {def:"ADP Weekly Employment Pulse — highest-frequency private payroll signal. Releases every Tuesday at 8:15am ET.", src:"ADP Research / FRED: ADPWNUSNERSA"},
   JOLTS:        {def:"Job Openings (JOLTS). High openings = tight labor market. Quits rate (within JOLTS) = worker confidence. Powell-watched.", src:"BLS / FRED: JTSJOL"},
   INIT_CLAIMS:  {def:"Initial Jobless Claims (weekly). Best weekly recession indicator. 300K+ sustained = deteriorating labor market.", src:"DOL / FRED: ICSA"},
   CPI:          {def:"Consumer Price Index — headline inflation. Includes food and energy. Monthly. Basis for lease escalation clauses.", src:"BLS / FRED: CPIAUCSL"},
@@ -2955,7 +2907,6 @@ const KPI_TIPS = {
   SHELTER:      {def:"CPI Shelter Component (35% of CPI). Lags market rents by 12-18 months due to lease re-pricing methodology.", src:"BLS / FRED: CUSR0000SAH1"},
   RENT_OER:     {def:"Owners' Equivalent Rent — BLS estimate of what homeowners 'would pay' to rent their home. 24% of CPI. Slow-moving.", src:"BLS / FRED: CUSR0000SEHC"},
   PMI_MFG:      {def:"Manufacturing Business Confidence (OECD). Proxy for ISM Manufacturing PMI direction. >50 = expanding.", src:"OECD / FRED: BSCICP02USM460S"},
-  ISM_SVCS:     {def:"Adjusted National Financial Conditions Index (Chicago Fed). Removes economic conditions to show pure financial tightness. Below 0 = loose, above 0 = tight. NOTE: This series maps to ANFCI, not ISM Services.", src:"Chicago Fed / FRED: ANFCI"},
   LEADING_IDX:  {def:"Conference Board Leading Economic Index. Composite of 10 forward-looking indicators. 3+ consecutive declines = recession signal.", src:"Conference Board / FRED: USSLIND"},
   FED_BS:       {def:"Federal Reserve Balance Sheet (Total Assets). QE = expanding balance sheet = liquidity injection = risk-on. QT = opposite.", src:"Federal Reserve / FRED: WALCL"},
   RRPON:        {def:"Reverse Repo Facility. Cash parked overnight at Fed by money market funds. Draining = liquidity returning to system = positive.", src:"NY Fed / FRED: RRPONTSYD"},
@@ -3041,7 +2992,6 @@ const KPI_TIPS = {
   CONST_SPEND:  {def:"Total Construction Spending. Covers residential and commercial construction activity. Rising = competition for labor and materials → development cost pressure.", src:"Census / FRED: TTLCONS"},
   EARN_CONST:   {def:"Construction Sector Average Hourly Earnings. Labor cost for developers. Rising construction wages = higher development costs = constrained supply → bullish for existing stock.", src:"BLS / FRED: CES2000000008"},
   FED_DEBT:     {def:"Total Public Debt Outstanding. The Treasury borrowing requirement. Growing rapidly → more Treasury supply → upward rate pressure on all borrowing costs.", src:"US Treasury / FRED: GFDEBTN"},
-  MULTIFAMILY:  {def:"5+ Unit Multifamily Housing Starts. The most direct supply signal for apartment investors. What's starting now will compete for your tenants in 12-18 months.", src:"Census/HUD / FRED: HOUST5F"},
   ANFCI:        {def:"Adjusted National Financial Conditions Index (Chicago Fed). Removes the effect of economic conditions — shows pure financial system tightness. Below 0 = looser than normal. Ackman uses this to time credit markets.", src:"Chicago Fed / FRED: ANFCI"},
 };
 
@@ -3114,8 +3064,8 @@ function isMarketHours() {
   const janOff = new Date(now.getFullYear(), 0, 1).getTimezoneOffset();
   const julOff = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
   const isDST  = now.getTimezoneOffset() < Math.max(janOff, julOff);
-  const etHours = now.getUTCHours() + (isDST ? -4 : -5);
-  const etMins  = etHours * 60 + now.getUTCMinutes();
+  const etMinsRaw = (now.getUTCHours() + (isDST ? -4 : -5)) * 60 + now.getUTCMinutes();
+  const etMins    = (etMinsRaw + 1440) % 1440; // handle negative wrap-around
   return etMins >= (9 * 60 + 30) && etMins < (16 * 60);
 }
 
@@ -3313,14 +3263,14 @@ async function startTerminal() {
   toast('Loaded ' + Object.keys(D).length + ' series — FRED 60min · RT 2min live · News 10min', 'ok');
 
   // Kick off external API fetches in background (non-blocking)
-  fetchNews();
-  fetchIPEDS();
-  fetchCensus();
-  if (EXT_KEYS.BLS)       fetchBLS();
-  if (EXT_KEYS.FINNHUB)   fetchFinnhubCalendar();
+  // Each .then() re-renders its tab if the user has already visited it
+  fetchNews().then(() => { if (DONE['news']) renderNews(); });
+  fetchIPEDS().then(() => { if (DONE['universities']) renderUniversities(); });
+  fetchCensus().then(() => { if (DONE['markets2']) renderMarkets2(); });
+  fetchBLS().then(() => { if (DONE['overview'] || DONE['growth'] || DONE['inflation']) reRenderAll(); });
+  if (EXT_KEYS.FINNHUB)   fetchFinnhubCalendar().then(() => { if (DONE['realtime']) renderRealtime(); });
   if (EXT_KEYS.SCORECARD) fetchScorecard();
   fetchZillow().then(() => { if (DONE['housing']) renderHousing(); });
-  fetchApartmentList().then(() => { if (DONE['housing']) renderHousing(); });
   fetchAllRealtime().then(() => fetchFedWatch());
   scheduleRTRefresh();     // RT prices: 2min market hours, 15min overnight
   scheduleNewsRefresh();   // News: 10min (NewsAPI rate limit aware)
@@ -3420,7 +3370,7 @@ const val  = k => {
 };
 const prv  = (k,n=1) => D[k]?.[n]?.value ?? null;
 const chg  = (k,n=1) => { const c=val(k),p=prv(k,n); return c!=null&&p!=null?c-p:null; };
-const yoy  = k => D[k]&&D[k][11]&&D[k][0]?((D[k][0].value/D[k][11].value-1)*100):null;
+const yoy  = k => D[k]&&D[k][12]&&D[k][0]?((D[k][0].value/D[k][12].value-1)*100):null;
 const spk  = (k,n=24) => D[k]?D[k].slice(0,n).reverse().map(d=>d.value):[];
 const mom3 = k => D[k]&&D[k][3]&&D[k][0]?((D[k][0].value/D[k][3].value-1)*100):null;
 const latestDate = k => D[k]?.[0]?.date ?? null;
@@ -3584,20 +3534,18 @@ function buildFOMCForward() {
     }));
   }
 
-  // Fallback: estimate from 2Y Treasury
+  // Fallback: estimate from 2Y Treasury — use official FOMC dates
   const impliedCutsBps = Math.max(0, Math.round((ff - t2) * 100));
   const now = new Date();
-  let m = now.getMonth(), y = now.getFullYear();
-  const fomcMs = [1,3,4,6,7,9,10,12];
-  let found = 0;
-  const dates = [];
-  for (let i = 0; i < 24 && found < 8; i++) {
-    m++; if (m > 11) { m = 0; y++; }
-    if (fomcMs.includes(m)) {
-      dates.push(new Date(y, m, 15).toLocaleDateString('en-US', {month:'short', year:'2-digit'}));
-      found++;
-    }
-  }
+  const today = now.toISOString().split('T')[0];
+  // Pull future meetings from the authoritative generateFOMCDates()
+  const year = now.getFullYear();
+  let allDates = generateFOMCDates(year).map(x => x);
+  // Also include next year in case fewer than 8 remain this year
+  const nextYearDates = generateFOMCDates(year + 1);
+  allDates = allDates.concat(nextYearDates);
+  const futureDates = allDates.filter(x => x.date >= today);
+  const dates = futureDates.slice(0, 8).map(x => x.label);
   let rem = Math.round(impliedCutsBps / 25);
   let cumBps = 0;
   return dates.map(dt => {
@@ -3716,7 +3664,7 @@ function renderRegime() {
                ['REFLATION','var(--yellow)','↑','↑','Real assets win. Fix rate exposure.'],
                ['STAGFLATION','var(--orange)','↓','↑','Defend. No new leverage. Survival.'],
                ['DISINFLATION','var(--red)','↓','↓','Dry powder. Buy distress. Patient.']].map(([n,c,g,inf,r])=>
-              `<tr style="${R.regime===n?`background:${c}09`:''}"}>
+              `<tr style="${R.regime===n?`background:${c}09`:''}">
                 <td style="color:${c};font-weight:600">${n}</td><td style="color:${g==='↑'?'var(--green)':'var(--red)'}">${g}</td><td style="color:${inf==='↑'?'var(--red)':'var(--green)'}">${inf}</td><td class="tdl">${r}</td>
               </tr>`).join('')}
           </tbody></table>
@@ -3939,10 +3887,20 @@ function renderGrowth() {
       </div>
       <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--purple)"></span>GROWTH DASHBOARD</div></div>
         <table class="dt"><thead><tr><th>INDICATOR</th><th>VALUE</th><th>TREND</th><th>RE SIGNAL</th></tr></thead><tbody>
-          ${[['GDP Growth','GDP',1,'%','Rent demand anchor'],['NFP MOM','PAYROLLS',0,'K','Headline employment'],['Private MOM','PAYROLLS_PRIV',0,'K','Clean demand signal'],['JOLTS','JOLTS',0,'M','Labor tightness',1000000],['Durable 3M','DURABLE',1,'%',null,'mom3'],['Indl Prod 3M','INDPRO',2,'%',null,'mom3'],['Retail 3M','RETAIL',1,'%',null,'mom3'],['UMich Sent.','CONF',1,'','Consumer health']].map(([n,k,d,s,div,mode])=>{
-            const v=mode==='mom3'?mom3(k):(div?val(k)&&val(k)/div:val(k));
-            const c=mode==='mom3'?mom3(k):chg(k);
-            return `<tr><td>${n}</td><td>${fv(v,d,s)}</td><td>${fc(c,d,s)}</td><td class="tdl">${['Rent demand anchor','Headline employment','Clean demand signal','Labor tightness','Business investment','Industrial output','Consumer spending','Consumer health'][[0,1,2,3,4,5,6,7][[['GDP Growth','NFP MOM','Private MOM','JOLTS','Durable 3M','Indl Prod 3M','Retail 3M','UMich Sent.'].indexOf(n)]]]||''}</td></tr>`;
+          ${[['GDP Growth','GDP',1,'%','Rent demand anchor'],
+             ['NFP MOM','PAYROLLS',0,'K','Headline employment'],
+             ['Private MOM','PAYROLLS_PRIV',0,'K','Clean demand signal'],
+             ['JOLTS','JOLTS',0,'M','Labor tightness',1000000],
+             ['Durable 3M','DURABLE',1,'%','Business investment','mom3'],
+             ['Indl Prod 3M','INDPRO',2,'%','Industrial output','mom3'],
+             ['Retail 3M','RETAIL',1,'%','Consumer spending','mom3'],
+             ['UMich Sent.','CONF',1,'','Consumer health']
+          ].map(([n,k,d,s,label,modeOrDiv])=>{
+            const isM3 = modeOrDiv==='mom3';
+            const divisor = typeof modeOrDiv==='number' ? modeOrDiv : null;
+            const v = isM3 ? mom3(k) : (divisor ? (val(k)!=null ? val(k)/divisor : null) : val(k));
+            const c = isM3 ? mom3(k) : chg(k);
+            return `<tr><td>${n}</td><td>${fv(v,d,s)}</td><td>${fc(c,d,s)}</td><td class="tdl">${label||''}</td></tr>`;
           }).join('')}
         </tbody></table>
       </div>
@@ -3963,12 +3921,12 @@ function renderGrowth() {
         'Private payrolls · independent of BLS',
         spark(spk('ADP_MONTHLY'),'var(--green)'),
         val('ADP_MONTHLY')&&val('ADP_MONTHLY')>100000?'pos':'warn','ADP_MONTHLY')}
-      ${mc('ADP WEEKLY PULSE',
-        val('ADP_WEEKLY') ? fv(val('ADP_WEEKLY')/1000,1,'M') : '--',
-        fc(val('ADP_WEEKLY')&&val('ADP_WEEKLY')-(prv('ADP_WEEKLY')||0), 0, 'K WOW'),
-        'Weekly employment estimate · highest frequency',
-        spark(spk('ADP_WEEKLY'),'var(--cyan)'),
-        val('ADP_WEEKLY')&&val('ADP_WEEKLY')>100000?'pos':'warn','ADP_WEEKLY')}
+      ${mc('LEADING INDEX (LEI)',
+        fv(val('LEADING_IDX'),1),
+        fc(chg('LEADING_IDX'),2)+' MOM',
+        'Conference Board LEI · 3+ consecutive declines = recession signal',
+        spark(spk('LEADING_IDX'),chg('LEADING_IDX')!=null&&chg('LEADING_IDX')<0?'var(--red)':'var(--green)'),
+        chg('LEADING_IDX')!=null&&chg('LEADING_IDX')<0?'neg':'pos','LEADING_IDX')}
       ${mc('ADP vs BLS DELTA',
         (val('ADP_MONTHLY')&&val('PAYROLLS')) ? fv((val('ADP_MONTHLY')-val('PAYROLLS'))/1000,1,'K') : '--',
         '',
@@ -3976,17 +3934,16 @@ function renderGrowth() {
         spark([val('ADP_MONTHLY')||0,val('PAYROLLS')||0],'var(--yellow)'),
         Math.abs((val('ADP_MONTHLY')||0)-(val('PAYROLLS')||0))<50000?'pos':'warn','')}
       ${mc('FIN CONDITIONS (ANFCI)',
-        fv(val('ISM_SVCS'),1),
-        fc(chg('ISM_SVCS'),2)+' WOW',
+        fv(val('ANFCI'),1),
+        fc(chg('ANFCI'),2)+' WOW',
         'Below 0 = loose · Above 0 = tight · Chicago Fed Adj. NFCI (weekly)',
-        spark(spk('ISM_SVCS'),val('ISM_SVCS')&&val('ISM_SVCS')>55?'var(--green)':val('ISM_SVCS')&&val('ISM_SVCS')>50?'var(--yellow)':'var(--red)'),
-        val('ISM_SVCS')&&val('ISM_SVCS')>55?'pos':val('ISM_SVCS')&&val('ISM_SVCS')>50?'warn':'neg','ISM_SVCS')}
+        spark(spk('ANFCI'),val('ANFCI')!=null&&val('ANFCI')>0?'var(--red)':'var(--green)'),
+        val('ANFCI')!=null&&val('ANFCI')>0.5?'neg':val('ANFCI')!=null&&val('ANFCI')>0?'warn':'pos','ANFCI')}
     </div>
 
     ${sh('CMBS DELINQUENCY BY PROPERTY TYPE','QUARTERLY · FRED · DIRECT CRE STRESS SIGNAL')}
     <div class="g4">
       ${mc('CMBS OVERALL DQ',fv(val('CMBS_DQ'),2,'%'),fc(chg('CMBS_DQ'),2,'% QOQ'),'All CRE CMBS delinquency',spark(spk('CMBS_DQ'),'var(--red)'),val('CMBS_DQ')&&val('CMBS_DQ')>5?'neg':'warn','CMBS_DQ')}
-      ${mc('CMBS OVERALL DQ',fv(val('CMBS_DQ'),2,'%'),fc(chg('CMBS_DQ'),2,'% QOQ'),'Overall CMBS delinquency rate',spark(spk('CMBS_DQ'),'var(--orange)'),val('CMBS_DQ')&&val('CMBS_DQ')>5?'neg':'warn','CMBS_DQ')}
       ${mc('CREDIT CARD DQ',fv(val('CREDIT_CARD_DQ'),2,'%'),fc(chg('CREDIT_CARD_DQ'),2,'% QOQ'),'Credit card delinquency rate — consumer stress',spark(spk('CREDIT_CARD_DQ'),'var(--red)'),val('CREDIT_CARD_DQ')&&val('CREDIT_CARD_DQ')>8?'neg':'warn','CREDIT_CARD_DQ')}
       ${mc('INITIAL JOBLESS CLAIMS',fv(val('INIT_CLAIMS')!=null?val('INIT_CLAIMS')/1000:null,0,'K'),fc(chg('INIT_CLAIMS')!=null?chg('INIT_CLAIMS')/1000:null,0,'K WOW'),'Weekly leading labor indicator',spark(spk('INIT_CLAIMS'),'var(--yellow)'),val('INIT_CLAIMS')&&val('INIT_CLAIMS')<250000?'pos':'neg','INIT_CLAIMS')}
     </div>`;
@@ -4030,7 +3987,7 @@ function renderHousing() {
     ${sh('SUPPLY PIPELINE')}
     <div class="g4">
       ${mc('HOUSING STARTS',fv(val('HOUSING_STARTS')?val('HOUSING_STARTS')/1000:null,0,'K'),fc(chg('HOUSING_STARTS')?chg('HOUSING_STARTS')/1000:null,1,'K')+' MOM','Total annualized',spark(spk('HOUSING_STARTS'),'var(--green)'),'','HOUSING_STARTS')}
-      ${mc('5+ UNIT STARTS',fv(val('MULTIFAMILY')?val('MULTIFAMILY')/1000:null,0,'K'),fc(chg('MULTIFAMILY')?chg('MULTIFAMILY')/1000:null,1,'K')+' MOM','MF pipeline — SH competition',spark(spk('MULTIFAMILY'),'var(--blue)'),'warn','MULTIFAMILY')}
+      ${mc('5+ UNIT STARTS',fv(val('MF_STARTS')?val('MF_STARTS')/1000:null,0,'K'),fc(chg('MF_STARTS')?chg('MF_STARTS')/1000:null,1,'K')+' MOM','MF pipeline — SH competition',spark(spk('MF_STARTS'),'var(--blue)'),'warn','MF_STARTS')}
       ${mc('BUILDING PERMITS',fv(val('PERMITS')?val('PERMITS')/1000:null,0,'K'),fc(chg('PERMITS')?chg('PERMITS')/1000:null,1,'K')+' MOM','Leading 6-18mo supply signal',spark(spk('PERMITS'),'var(--cyan)'),'','PERMITS')}
       ${mc('RENTAL VACANCY',fv(val('VACANCY_RENT'),1,'%'),fc(chg('VACANCY_RENT'),1,'%')+' QOQ','<6.5%=tight landlord mkt',spark(spk('VACANCY_RENT'),val('VACANCY_RENT')&&val('VACANCY_RENT')<6.5?'var(--green)':'var(--red)'),val('VACANCY_RENT')&&val('VACANCY_RENT')<6.5?'pos':'neg','VACANCY_RENT')}
     </div>
@@ -4046,7 +4003,6 @@ function renderHousing() {
   const housingEl = document.getElementById('tab-housing');
   if (housingEl) {
     housingEl.innerHTML += buildZoriSection();
-    housingEl.innerHTML += buildAptListSection();
   }
 }
 
@@ -4083,31 +4039,6 @@ function buildZoriSection() {
     + '<tbody>' + rows + '</tbody></table></div>';
 }
 
-function buildAptListSection() {
-  if (!APTLIST_LOADED || !APTLIST_DATA.national || !APTLIST_DATA.national.length) {
-    return '<div class="card" style="margin-top:8px"><div style="color:var(--muted2);font-size:9px;padding:8px">'
-         + (APTLIST_LOADED ? 'No Apartment List data available' : 'Loading Apartment List rent data...')
-         + '</div></div>';
-  }
-  var d      = APTLIST_DATA.national;
-  var l1     = d[0] ? d[0].rent1br : null;
-  var p1     = d[12] ? d[12].rent1br : null;
-  var l2     = d[0] ? d[0].rent2br : null;
-  var p2     = d[12] ? d[12].rent2br : null;
-  var yoy1   = (l1 && p1) ? ((l1 - p1) / p1 * 100).toFixed(1) : null;
-  var yoy2   = (l2 && p2) ? ((l2 - p2) / p2 * 100).toFixed(1) : null;
-  var c1     = yoy1 ? (parseFloat(yoy1) > 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted2)';
-  var c2     = yoy2 ? (parseFloat(yoy2) > 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted2)';
-
-  return '<div class="card" style="margin-top:8px">'
-    + '<div class="ct"><span class="cdot" style="background:var(--purple)"></span>APARTMENT LIST NATIONAL RENT INDEX <span class="tsrc">APARTMENT LIST · LIVE</span></div>'
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 0">'
-    + '<div class="umet"><div class="uml">1BR National Median</div><div class="umv">' + (l1 ? '$' + Math.round(l1).toLocaleString() : '--') + '</div></div>'
-    + '<div class="umet"><div class="uml">1BR YOY</div><div class="umv" style="color:' + c1 + '">' + (yoy1 ? (parseFloat(yoy1) >= 0 ? '+' : '') + yoy1 + '%' : '--') + '</div></div>'
-    + '<div class="umet"><div class="uml">2BR National Median</div><div class="umv">' + (l2 ? '$' + Math.round(l2).toLocaleString() : '--') + '</div></div>'
-    + '<div class="umet"><div class="uml">2BR YOY</div><div class="umv" style="color:' + c2 + '">' + (yoy2 ? (parseFloat(yoy2) >= 0 ? '+' : '') + yoy2 + '%' : '--') + '</div></div>'
-    + '</div></div>';
-}
 
 // ── TAB: STUDENT HOUSING ──
 function renderStudent() {
