@@ -1932,6 +1932,16 @@ async function fetchAllRealtime() {
     if (DONE['realtime']) renderRealtime();
     else if (ACTIVE_TAB === 'realtime') { DONE['realtime'] = true; renderRealtime(); }
     updateRTBanner();
+    // Recalculate FRED status — RT may cover FRED errors (e.g., GOLD)
+    if (typeof SERIES_STATUS === 'object' && Object.keys(SERIES_STATUS).length > 0) {
+      const ok2 = Object.values(SERIES_STATUS).filter(s => s.status==='ok'||s.status==='cached').length;
+      const errRaw2 = Object.values(SERIES_STATUS).filter(s => s.status==='error').length;
+      const stale2 = Object.values(SERIES_STATUS).filter(s => s.status==='stale').length;
+      const rtCov2 = Object.keys(YAHOO_RT_FALLBACK||{}).filter(k => SERIES_STATUS[k]?.status==='error' && RT[YAHOO_RT_FALLBACK[k]]?.price!=null).length;
+      const err2 = Math.max(0, errRaw2-rtCov2);
+      const c2 = err2>10?'var(--red)':stale2>5?'var(--yellow)':'var(--green)';
+      setStatus(`LIVE: ${ok2+rtCov2} · STALE: ${stale2} · ERR: ${err2}`, c2);
+    }
   }
 }
 
