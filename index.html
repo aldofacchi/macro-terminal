@@ -1188,11 +1188,11 @@ const MKTS=[
 // EXTERNAL API CONFIGURATION
 // ════════════════════════════════════════════════════
 const EXT_KEYS = {
-  NEWS:       localStorage.getItem('newsapi_key')       || '',
-  BLS:        localStorage.getItem('bls_key')           || '',
-  CENSUS:     localStorage.getItem('census_key')        || '',
-  FINNHUB:    localStorage.getItem('finnhub_key')       || '',
-  SCORECARD:  localStorage.getItem('scorecard_key')     || '',
+  NEWS:       (localStorage.getItem('newsapi_key')    || '').trim() || '',
+  BLS:        (localStorage.getItem('bls_key')        || '').trim() || '',
+  CENSUS:     (localStorage.getItem('census_key')     || '').trim() || '',
+  FINNHUB:    (localStorage.getItem('finnhub_key')    || '').trim() || '',
+  SCORECARD:  (localStorage.getItem('scorecard_key')  || '').trim() || '',
 };
 
 // IPEDS via Urban Institute — no key required
@@ -1917,24 +1917,6 @@ async function fetchYahooAll() {
 }
 
 // Keep fetchYahoo for individual lookups (used nowhere currently but useful)
-async function fetchYahoo(symbol) {
-  const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) + '?interval=1d&range=5d';
-  const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl);
-  try {
-    const resp = await fetch(proxyUrl);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const wrapper = await resp.json();
-    const j = JSON.parse(wrapper.contents || '{}');
-    const meta = j?.chart?.result?.[0]?.meta;
-    if (!meta) throw new Error('no meta');
-    const price = meta.regularMarketPrice;
-    const prev  = meta.chartPreviousClose || price;
-    return { price, change: price-prev, changePct: (price-prev)/prev*100, prevClose: prev,
-             high: meta.regularMarketDayHigh||price, low: meta.regularMarketDayLow||price,
-             timestamp: new Date(meta.regularMarketTime*1000||Date.now()), symbol };
-  } catch(e) { return null; }
-}
-
 async function fetchAllRealtime() {
   if (RT_LOADING) return;
   RT_LOADING = true;
@@ -3881,14 +3863,13 @@ function spark(data, color='var(--green)', h=36) {
           x=(i/(vals.length-1))*w,y=h-((v-mn)/rng)*(h-4)-2,
           lbl=v>=10000?v.toFixed(0):v>=1000?v.toFixed(1):v>=100?v.toFixed(1):v.toFixed(2),
           tw=lbl.length*5.5+8,tx=Math.max(tw/2,Math.min(x,w-tw/2)),ty=Math.max(12,y-10);
-      s.querySelector('.sp-hl').setAttribute('x1',x);s.querySelector('.sp-hl').setAttribute('x2',x);
-      s.querySelector('.sp-hl').style.display='';
-      s.querySelector('.sp-hd').setAttribute('cx',x);s.querySelector('.sp-hd').setAttribute('cy',y);
-      s.querySelector('.sp-hd').style.display='';
-      var bg=s.querySelector('.sp-bg');bg.setAttribute('x',tx-tw/2);bg.setAttribute('y',ty-9);bg.setAttribute('width',tw);bg.style.display='';
-      var t=s.querySelector('.sp-ht');t.textContent=lbl;t.setAttribute('x',tx);t.setAttribute('y',ty);t.style.display='';
+      var hl=s._hl||(s._hl=s.querySelector('.sp-hl')),hd=s._hd||(s._hd=s.querySelector('.sp-hd')),bg=s._bg||(s._bg=s.querySelector('.sp-bg')),ht=s._ht||(s._ht=s.querySelector('.sp-ht'));
+      hl.setAttribute('x1',x);hl.setAttribute('x2',x);hl.style.display='';
+      hd.setAttribute('cx',x);hd.setAttribute('cy',y);hd.style.display='';
+      bg.setAttribute('x',tx-tw/2);bg.setAttribute('y',ty-9);bg.setAttribute('width',tw);bg.style.display='';
+      ht.textContent=lbl;ht.setAttribute('x',tx);ht.setAttribute('y',ty);ht.style.display='';
     })(event,this)"
-    onmouseleave="this.querySelector('.sp-hl').style.display='none';this.querySelector('.sp-hd').style.display='none';this.querySelector('.sp-bg').style.display='none';this.querySelector('.sp-ht').style.display='none'">
+    onmouseleave="var s=this,hl=s._hl||s.querySelector('.sp-hl'),hd=s._hd||s.querySelector('.sp-hd'),bg=s._bg||s.querySelector('.sp-bg'),ht=s._ht||s.querySelector('.sp-ht');hl.style.display='none';hd.style.display='none';bg.style.display='none';ht.style.display='none'">
     <path d="M0,${h} L${pts[0]} ${pts.map(p=>'L'+p).join(' ')} L${w},${h} Z" fill="${color}" opacity="0.08"/>
     <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
     <circle cx="${last[0]}" cy="${last[1]}" r="2.5" fill="${color}"/>
@@ -4227,8 +4208,8 @@ function renderRegime() {
       <p>Current: <strong style="color:${cg}">${R.regime}</strong> · YC: <strong>${R.ycR}</strong>. ${R.reImpl} All three G/I/L dimensions must align for high-conviction deployment. Misaligned signals = reduce sizing, demand better pricing, shorten hold periods. The Copper/Gold ratio and TIPS breakevens are your cross-validation tools.</p>
     </div>
     ${(()=>{
-      const regimeHist = JSON.parse(localStorage.getItem('shmacro_regime_history') || '[]');
-      if (regimeHist.length < 1) return '';
+      let regimeHist = []; try { regimeHist = JSON.parse(localStorage.getItem('shmacro_regime_history') || '[]'); } catch(_) {}
+      if (!Array.isArray(regimeHist) || regimeHist.length < 1) return '';
       return sh('REGIME HISTORY','DAILY SNAPSHOTS · STORED LOCALLY')
       + '<div class="card">'
       + '<div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>MACRO REGIME TIMELINE</div><span class="freshness fresh">'+regimeHist.length+' days</span></div>'
@@ -4357,7 +4338,7 @@ function renderLiquidity() {
       </div>
       <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>RRP DRAIN TRACKER</div>${freshnessTag('RRPON')}</div>
         <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
-          ${[['CURRENT',fv(rrp,1,'B'),'var(--cyan)'],['PEAK (Dec\'22)','$2,500B','var(--muted2)'],['DRAINED',fv(rrp?Math.max(0,2500-rrp):null,0,'B'),'var(--green)'],['Δ MOM',fv(chg('RRPON')?chg('RRPON')/1e9:null,1,'B'),chg('RRPON')&&chg('RRPON')<0?'var(--green)':'var(--red)']].map(([l,v,c])=>
+          ${[['CURRENT',fv(rrp,1,'B'),'var(--cyan)'],['PEAK (Dec\'22)','$2,500B','var(--muted2)'],['DRAINED',fv(rrp?Math.max(0,2500-rrp):null,0,'B'),'var(--green)'],['Δ MOM',fv(chg('RRPON'),1,'B'),chg('RRPON')&&chg('RRPON')<0?'var(--green)':'var(--red)']].map(([l,v,c])=>
             `<div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">${l}</div><div style="font-family:'Orbitron',monospace;font-size:17px;font-weight:700;color:${c}">${v}</div></div>`).join('')}
         </div>
         <div class="liq-labels"><span style="color:var(--green)">DRAINED ($0)</span><span>RRP BALANCE</span><span style="color:var(--red)">FULL ($2.5T)</span></div>
