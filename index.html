@@ -83,6 +83,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .fetch-progress-bar{height:100%;width:0;background:var(--cyan);transition:width .3s ease;box-shadow:0 0 6px var(--cyan);}
 .tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;gap:1px;overflow-x:auto;scrollbar-width:none;position:sticky;top:70px;z-index:298;}
 .tabs-wrap::-webkit-scrollbar{display:none;}
+.tabs-wrap::after{content:'';position:sticky;right:0;top:0;min-width:40px;height:100%;background:linear-gradient(90deg,transparent,var(--bg2));pointer-events:none;flex-shrink:0;}
 .tab{padding:8px 14px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px;}
 .tab:hover{color:var(--cyan);background:rgba(255,255,255,.025);}
 .tab.active{color:var(--green);border-bottom-color:var(--green);}
@@ -188,6 +189,9 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 /* ══ REGIME CARD ══ */
 .regime-card{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:18px;}
 .regime-main-name{font-family:'Orbitron',sans-serif;font-size:31px;font-weight:900;letter-spacing:4px;line-height:1;margin-bottom:5px;}
+.regime-near-threshold{animation:regimePulse 2s ease-in-out infinite;}
+.regime-near-threshold::after{content:'NEAR THRESHOLD';display:block;font-size:8px;letter-spacing:2px;color:var(--yellow);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+@keyframes regimePulse{0%,100%{opacity:1}50%{opacity:.6}}
 .regime-dims{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}
 .rdim{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:9px 11px;}
 .rdim-lbl{font-size:8px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:3px;}
@@ -347,16 +351,23 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 }
 @media print{
   body{background:#fff !important;color:#000 !important;}
-  .regime-banner,.topbar,.tabs-wrap,.rbtn,.settings-btn,#refresh-countdown,.footer,.tsrc,button,.tnew,.tbadge,.auto-badge,#fetch-status{display:none !important;}
-  .card{background:#fff !important;border:1px solid #ddd !important;break-inside:avoid;page-break-inside:avoid;}
+  .regime-banner,.topbar,.tabs-wrap,.rbtn,.settings-btn,#refresh-countdown,.footer,.tsrc,button,.tnew,.tbadge,.auto-badge,#fetch-status,.fetch-progress,#setup-modal,.theme-picker-overlay,.cpg-logo-wrap,.topbar-divider{display:none !important;}
+  .tab-panel{page-break-before:auto;}
+  .card{background:#fff !important;border:1px solid #ddd !important;break-inside:avoid;page-break-inside:avoid;box-shadow:none !important;}
   .bv{color:#000 !important;}
   .ct{color:#333 !important;}
   .sh h2{color:#000 !important;}
   .comm{background:#f8f8f8 !important;border-color:#ddd !important;}
-  .comm p,.vl,.dt td,.dt th{color:#333 !important;}
+  .comm p,.vl,.dt td,.dt th,.mc-rl,.mc-name,.mc-sub,.sn,.snote{color:#333 !important;}
   .dt th{border-bottom-color:#ccc !important;}
+  .regime-main-name{color:#000 !important;}
+  .regime-card{background:#fff !important;border:1px solid #ccc !important;}
+  .rdim-val{color:#000 !important;}
+  .g2,.g3,.g4,.g5,.g21,.g12,.g31{gap:8px !important;}
   svg.sp{filter:contrast(2) !important;}
   #print-header{display:block !important;}
+  .mc2,.uc{background:#fff !important;border:1px solid #ddd !important;}
+  a{color:#333 !important;text-decoration:underline !important;}
 }
 
 </style>
@@ -2371,6 +2382,7 @@ function renderRealtime() {
           ${_statusText}
         </span>
         <span style="color:var(--muted2)">${isMarketOpen?'MARKET OPEN':'MARKET CLOSED'}</span>
+        ${_wsConnected?'<span style="color:var(--muted);font-size:8px" title="Free Finnhub tier reconnects every 30s — streaming SPY/GLD/USO/CPER/UUP/VIXY">WS 30s</span>':''}
         <button class="rbtn" onclick="fetchAllRealtime().then(()=>renderRealtime())">⟳ REFRESH</button>
       </div>
     </div>
@@ -4124,7 +4136,7 @@ function renderRegime() {
       <div class="regime-card" style="border-color:${cg}30;box-shadow:inset 0 0 40px ${cg}03">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
-            <div class="regime-main-name" style="color:${cg}">${R.regime}</div>
+            <div class="regime-main-name${Math.abs(R.G-50)<=5||Math.abs(R.I-55)<=5||Math.abs(R.L-50)<=5?' regime-near-threshold':''}" style="color:${cg}">${R.regime}</div>
             <div style="font-size:9px;color:var(--muted2);letter-spacing:1px;margin-bottom:12px">CURRENT MACRO REGIME · ${new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}).toUpperCase()}</div>
           </div>
           <div style="text-align:right">
@@ -4189,7 +4201,7 @@ function renderRegime() {
         ${fomc.map(f=>`<div class="fomc-row">
           <span class="fomc-date">${f.date}</span>
           <div class="fomc-bar"><div class="fomc-fill" style="width:${Math.min(100,parseFloat(f.implied)/8*100)}%;background:${f.cut>0?'var(--green)':'var(--muted)'}"></div></div>
-          <span class="fomc-val" style="color:${f.cut>0?'var(--green)':'var(--muted2)'}">${f.implied}% ${f.cut>0?`(-${f.cut}bps)`:''}</span>
+          <span class="fomc-val" style="color:${f.cut>0?'var(--green)':'var(--muted2)'}">${f.implied}% ${f.cut>0?`(-${f.cut}bps)`:'<span style="font-size:8px;opacity:.6">No cuts implied</span>'}</span>
         </div>`).join('')}
         <div style="margin-top:8px">${buildFOMCForwardHTML()}</div>
       </div>
@@ -4216,7 +4228,7 @@ function renderRegime() {
     </div>
     ${(()=>{
       const regimeHist = JSON.parse(localStorage.getItem('shmacro_regime_history') || '[]');
-      if (regimeHist.length <= 1) return '';
+      if (regimeHist.length < 1) return '';
       return sh('REGIME HISTORY','DAILY SNAPSHOTS · STORED LOCALLY')
       + '<div class="card">'
       + '<div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>MACRO REGIME TIMELINE</div><span class="freshness fresh">'+regimeHist.length+' days</span></div>'
