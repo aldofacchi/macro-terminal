@@ -79,7 +79,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #fetch-status{font-size:9px;color:var(--muted2);}
 
 /* ══ TABS ══ */
-.tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;gap:1px;overflow-x:auto;scrollbar-width:none;position:sticky;top:68px;z-index:298;}
+.fetch-progress{position:sticky;top:68px;z-index:299;height:2px;background:transparent;}
+.fetch-progress-bar{height:100%;width:0;background:var(--cyan);transition:width .3s ease;box-shadow:0 0 6px var(--cyan);}
+.tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;gap:1px;overflow-x:auto;scrollbar-width:none;position:sticky;top:70px;z-index:298;}
 .tabs-wrap::-webkit-scrollbar{display:none;}
 .tab{padding:8px 14px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px;}
 .tab:hover{color:var(--cyan);background:rgba(255,255,255,.025);}
@@ -471,6 +473,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 </div>
 
 <!-- ══ TABS ══ -->
+<div class="fetch-progress" id="fetch-progress"><div class="fetch-progress-bar" id="fetch-bar"></div></div>
 <div class="tabs-wrap" id="main-tabs">
   <div class="tab active" data-tab="regime"><span class="tn">00</span>REGIME</div>
   <div class="tab" data-tab="overview"><span class="tn">01</span>OVERVIEW</div>
@@ -2504,7 +2507,8 @@ async function fetchNews() {
     const q = encodeURIComponent(
       '"student housing" OR "multifamily" OR "CMBS" OR "cap rate" OR "Federal Reserve" OR "interest rates" OR "real estate" OR "apartment" OR "rental market"'
     );
-    const url = `${NEWS_BASE}?q=${q}&language=en&sortBy=publishedAt&pageSize=30&apiKey=${EXT_KEYS.NEWS}`;
+    const domains = 'reuters.com,bloomberg.com,cnbc.com,wsj.com,ft.com,bisnow.com,globest.com,commercialobserver.com,multihousingnews.com,studenthousingbusiness.com';
+    const url = `${NEWS_BASE}?q=${q}&domains=${domains}&language=en&sortBy=publishedAt&pageSize=30&apiKey=${EXT_KEYS.NEWS}`;
     // NewsAPI blocks direct browser requests on Developer plan — must proxy
     const NEWS_PROXIES = [
       u => 'https://corsproxy.io/?' + encodeURIComponent(u),
@@ -3011,8 +3015,10 @@ async function fetchAll(force=false) {
   }
 
   setStatus(`FETCHING 0/${toFetch.length}...`, 'var(--yellow)');
+  const bar = document.getElementById('fetch-bar');
+  if (bar) { bar.style.width = '0%'; bar.parentElement.style.background = 'var(--border)'; }
 
-  const BATCH = 8; // ~129 series / 8 = ~17 batches
+  const BATCH = 12; // ~129 series / 12 = ~11 batches
   let done = 0;
   for (let i = 0; i < toFetch.length; i += BATCH) {
     const batch = toFetch.slice(i, i+BATCH);
@@ -3020,14 +3026,21 @@ async function fetchAll(force=false) {
     batch.forEach((k,bi) => { if (res[bi].value) D[k] = res[bi].value; });
     done += batch.length;
     setStatus(`FETCHING ${done}/${toFetch.length}...`, 'var(--yellow)');
-    if (i+BATCH < toFetch.length) await sleep(80);
+    if (bar) bar.style.width = Math.min(100, done/toFetch.length*100) + '%';
+    if (i+BATCH < toFetch.length) await sleep(50);
   }
+  if (bar) { bar.style.width = '100%'; setTimeout(() => { bar.style.width = '0%'; bar.parentElement.style.background = 'transparent'; }, 800); }
 
   const ok    = Object.values(SERIES_STATUS).filter(s => s.status === 'ok' || s.status === 'cached').length;
-  const err   = Object.values(SERIES_STATUS).filter(s => s.status === 'error').length;
+  const errRaw = Object.values(SERIES_STATUS).filter(s => s.status === 'error').length;
   const stale = Object.values(SERIES_STATUS).filter(s => s.status === 'stale').length;
+  // Don't count FRED errors for series with a working Yahoo RT fallback
+  const rtCovered = typeof YAHOO_RT_FALLBACK==='object' ? Object.keys(YAHOO_RT_FALLBACK).filter(k =>
+    SERIES_STATUS[k]?.status === 'error' && RT[YAHOO_RT_FALLBACK[k]]?.price != null
+  ).length : 0;
+  const err = Math.max(0, errRaw - rtCovered);
   const color = err > 10 ? 'var(--red)' : stale > 5 ? 'var(--yellow)' : 'var(--green)';
-  setStatus(`LIVE: ${ok} · STALE: ${stale} · ERR: ${err}`, color);
+  setStatus(`LIVE: ${ok+rtCovered} · STALE: ${stale} · ERR: ${err}`, color);
   updateDHPanel();
   updateDHDot(ok, err, stale, keys.length);
 }
@@ -4332,7 +4345,7 @@ function renderLiquidity() {
       </div>
       <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>RRP DRAIN TRACKER</div>${freshnessTag('RRPON')}</div>
         <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
-          ${[['CURRENT',fv(rrp,1,'B'),'var(--cyan)'],['PEAK (Dec\'22)','$2,500B','var(--muted2)'],['DRAINED',fv(rrp?Math.max(0,2500-rrp):null,0,'B'),'var(--green)']].map(([l,v,c])=>
+          ${[['CURRENT',fv(rrp,1,'B'),'var(--cyan)'],['PEAK (Dec\'22)','$2,500B','var(--muted2)'],['DRAINED',fv(rrp?Math.max(0,2500-rrp):null,0,'B'),'var(--green)'],['Δ MOM',fv(chg('RRPON')?chg('RRPON')/1e9:null,1,'B'),chg('RRPON')&&chg('RRPON')<0?'var(--green)':'var(--red)']].map(([l,v,c])=>
             `<div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">${l}</div><div style="font-family:'Orbitron',monospace;font-size:17px;font-weight:700;color:${c}">${v}</div></div>`).join('')}
         </div>
         <div class="liq-labels"><span style="color:var(--green)">DRAINED ($0)</span><span>RRP BALANCE</span><span style="color:var(--red)">FULL ($2.5T)</span></div>
@@ -4495,9 +4508,9 @@ function renderHousing() {
     </div>
     ${sh('SUPPLY PIPELINE')}
     <div class="g4">
-      ${mc('HOUSING STARTS',fv(val('HOUSING_STARTS')?val('HOUSING_STARTS')/1000:null,0,'K'),fc(chg('HOUSING_STARTS')?chg('HOUSING_STARTS')/1000:null,1,'K')+' MOM','Total annualized',spark(spk('HOUSING_STARTS'),'var(--green)'),'','HOUSING_STARTS')}
-      ${mc('5+ UNIT STARTS',fv(val('MF_STARTS')?val('MF_STARTS')/1000:null,0,'K'),fc(chg('MF_STARTS')?chg('MF_STARTS')/1000:null,1,'K')+' MOM','MF pipeline — SH competition',spark(spk('MF_STARTS'),'var(--blue)'),'warn','MF_STARTS')}
-      ${mc('BUILDING PERMITS',fv(val('PERMITS')?val('PERMITS')/1000:null,0,'K'),fc(chg('PERMITS')?chg('PERMITS')/1000:null,1,'K')+' MOM','Leading 6-18mo supply signal',spark(spk('PERMITS'),'var(--cyan)'),'','PERMITS')}
+      ${mc('HOUSING STARTS',fv(val('HOUSING_STARTS'),0,'K'),fc(chg('HOUSING_STARTS'),0,'K')+' MOM','Total annualized (thousands)',spark(spk('HOUSING_STARTS'),'var(--green)'),'','HOUSING_STARTS')}
+      ${mc('5+ UNIT STARTS',fv(val('MF_STARTS'),0,'K'),fc(chg('MF_STARTS'),0,'K')+' MOM','MF pipeline — SH competition',spark(spk('MF_STARTS'),'var(--blue)'),'warn','MF_STARTS')}
+      ${mc('BUILDING PERMITS',fv(val('PERMITS'),0,'K'),fc(chg('PERMITS'),0,'K')+' MOM','Leading 6-18mo supply signal',spark(spk('PERMITS'),'var(--cyan)'),'','PERMITS')}
       ${mc('RENTAL VACANCY',fv(val('VACANCY_RENT'),1,'%'),fc(chg('VACANCY_RENT'),1,'%')+' QOQ','<6.5%=tight landlord mkt',spark(spk('VACANCY_RENT'),val('VACANCY_RENT')&&val('VACANCY_RENT')<6.5?'var(--green)':'var(--red)'),val('VACANCY_RENT')&&val('VACANCY_RENT')<6.5?'pos':'neg','VACANCY_RENT')}
     </div>
     ${sh('RENT INFLATION')}
