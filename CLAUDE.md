@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Single-page Bloomberg-style macro terminal for student housing investment analysis. Built for Centurion Property Group (CPG). Tracks 147 FRED series, real-time market prices (Yahoo Finance), BLS employment data, Census demographics, IPEDS/Scorecard university data, Zillow rents, and Finnhub economic calendar — all rendered client-side with zero backend.
+Single-page Bloomberg-style macro terminal for student housing investment analysis. Built for Centurion Property Group (CPG). Tracks 125 FRED series, real-time market prices (Yahoo Finance), BLS employment data, Census demographics, IPEDS/Scorecard university data (20 universities), Zillow rents, and Finnhub economic calendar — all rendered client-side with zero backend. Requires ES2020+ browser (Chrome 80+, Safari 13.1+, Firefox 74+).
 
 ## Architecture
 
-- **Single file**: `index.html` (~4300 lines) — all HTML, CSS, and JS in one file
+- **Single file**: `index.html` (~4840 lines) — all HTML, CSS, and JS in one file
 - **No build step**: Open in browser or serve with any static HTTP server
 - **No dependencies**: Zero npm packages, no frameworks — vanilla JS only
 - **Data flow**: Browser → CORS proxies → FRED/BLS/Census/Yahoo/etc → localStorage cache → render
@@ -62,7 +62,7 @@ Lines 3395-4215  Tab renderers — Regime, Overview, Rates, Liquidity, Growth,
 - `computeRegime()` — Growth/Inflation/Liquidity scoring → 4-state regime (Goldilocks/Reflation/Stagflation/Disinflation)
 - `val(k)` — Get latest value for a series (prefers Yahoo RT over FRED when available)
 - `fredFetch(k)` — Fetch from FRED with 4-proxy cascade + localStorage cache
-- `fetchAll()` — Batch fetch all 127 FRED series in groups of 8
+- `fetchAll()` — Batch fetch all 125 FRED series in groups of 12
 - `renderTab(name)` — Dispatch to appropriate tab renderer
 - `esc(str)` / `escUrl(url)` — XSS sanitization for all external data
 
@@ -104,6 +104,7 @@ If all fail, stale localStorage cache is used.
 | 12 NEWS FEED | news | NewsAPI live headlines |
 | 13 UNIVERSITIES | universities | IPEDS + Scorecard live data |
 | 14 MSA MARKETS | markets2 | Census ACS demographics by MSA |
+| 15 COMPARE | compare | Side-by-side market comparison |
 
 ## Testing
 

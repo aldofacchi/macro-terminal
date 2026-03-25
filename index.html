@@ -13,7 +13,7 @@
   --green:#00ff9d;--green2:#00cc7a;
   --red:#ff3d5a;--yellow:#f0c040;--blue:#4da6ff;
   --cyan:#00e5ff;--purple:#b06aff;--orange:#ff8c42;
-  --white:#eef2fa;--muted:#4a5e80;--muted2:#7a8eb0;--text:#d0dae8;
+  --white:#eef2fa;--muted:#5a7098;--muted2:#7a8eb0;--text:#d0dae8;
   --goldilocks:#00ff9d;--reflation:#f0c040;--stagflation:#ff8c42;--deflation:#ff3d5a;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -138,7 +138,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 
 /* ══ SH ══ */
 .sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:6px;}
-.sh h2{font-size:11px;letter-spacing:3px;color:var(--white);text-transform:uppercase;white-space:nowrap;font-family:'Orbitron',sans-serif;}
+.sh h2{font-size:11px;letter-spacing:3px;color:var(--white);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Orbitron',sans-serif;}
 .sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
 .shb{font-size:8px;padding:2px 6px;border-radius:2px;letter-spacing:1px;white-space:nowrap;background:rgba(255,255,255,.04);color:var(--muted2);border:1px solid var(--border);}
 
@@ -341,8 +341,8 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 @media(max-width:480px){
   .topbar{flex-wrap:wrap;}
   .topbar-r{font-size:8px;gap:4px;}
-  .settings-btn,.rbtn{font-size:8px;padding:3px 6px;}
-  .tab{padding:5px 8px;font-size:9px;letter-spacing:1px;}
+  .settings-btn,.rbtn{font-size:8px;padding:3px 6px;min-height:44px;}
+  .tab{padding:5px 8px;font-size:9px;letter-spacing:1px;min-height:44px;display:flex;align-items:center;}
   .tab .tn{display:none;}
   .g2,.g3,.g4,.g5{gap:6px;}
   .card{padding:8px;}
@@ -883,7 +883,7 @@ function applyTheme(themeKey) {
   if (!theme) return;
   const root = document.documentElement;
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  localStorage.setItem('shmacro_theme', themeKey);
+  try { localStorage.setItem('shmacro_theme', themeKey); } catch(_) {}
   // Update active state in picker
   document.querySelectorAll('.theme-swatch').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === themeKey);
@@ -3130,7 +3130,7 @@ async function testAndLaunch() {
   document.getElementById('setup-err').textContent = '';
 
   async function tryUrl(url, isProxy) {
-    const r = await fetch(url);
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error('HTTP '+r.status);
     let j;
     if (isProxy) {
@@ -3778,13 +3778,22 @@ window.addEventListener('load', () => {
   document.getElementById('fred-key-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') testAndLaunch();
   });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('setup-modal')?.classList.add('hidden');
+      const tp = document.getElementById('theme-panel');
+      if (tp) tp.style.display = 'none';
+      const dh = document.getElementById('dh-panel');
+      if (dh) dh.style.display = 'none';
+    }
+  });
 });
 
 
 
 
 // ── DATA HELPERS ──
-const fv  = (v,d=2,s='') => v==null?'--':(+v).toFixed(d)+s;
+const fv  = (v,d=2,s='') => { if(v==null) return '--'; const n=(+v).toFixed(d); return (d===0&&Math.abs(v)>=1000?Number(n).toLocaleString('en-US'):n)+s; };
 
 // ── YAHOO RT → FRED KEY MAPPING ──
 // During market hours, val() prefers live Yahoo Finance data over stale FRED
