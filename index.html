@@ -351,23 +351,26 @@ svg.sp{width:100%;height:36px;overflow:visible;}
 }
 @media print{
   body{background:#fff !important;color:#000 !important;}
-  .regime-banner,.topbar,.tabs-wrap,.rbtn,.settings-btn,#refresh-countdown,.footer,.tsrc,button,.tnew,.tbadge,.auto-badge,#fetch-status,.fetch-progress,#setup-modal,.theme-picker-overlay,.cpg-logo-wrap,.topbar-divider{display:none !important;}
-  .tab-panel{page-break-before:auto;}
+  .regime-banner,.topbar,.tabs-wrap,.rbtn,.settings-btn,#refresh-countdown,.footer,.tsrc,button,.tnew,.tbadge,.auto-badge,#fetch-status,.fetch-progress,#setup-modal,.theme-picker-overlay,.cpg-logo-wrap,.topbar-divider,.dh-panel,#theme-panel,.toast-wrap{display:none !important;}
+  .panel.active{display:block !important;}
   .card{background:#fff !important;border:1px solid #ddd !important;break-inside:avoid;page-break-inside:avoid;box-shadow:none !important;}
-  .bv{color:#000 !important;}
-  .ct{color:#333 !important;}
+  .bv,.ccv,.pmi-num,.sc-prob{color:#000 !important;}
+  .ct,.ct-left{color:#333 !important;}
   .sh h2{color:#000 !important;}
   .comm{background:#f8f8f8 !important;border-color:#ddd !important;}
-  .comm p,.vl,.dt td,.dt th,.mc-rl,.mc-name,.mc-sub,.sn,.snote{color:#333 !important;}
+  .comm p,.vl,.dt td,.dt th,.mc-rl,.mc-name,.mc-sub,.sn,.snote,.mc-row span,.ccl,.ccs{color:#333 !important;}
   .dt th{border-bottom-color:#ccc !important;}
   .regime-main-name{color:#000 !important;}
-  .regime-card{background:#fff !important;border:1px solid #ccc !important;}
-  .rdim-val{color:#000 !important;}
+  .regime-card,.scen-card{background:#fff !important;border:1px solid #ccc !important;}
+  .rdim-val,.rdim-label{color:#000 !important;}
   .g2,.g3,.g4,.g5,.g21,.g12,.g31{gap:8px !important;}
-  svg.sp{filter:contrast(2) !important;}
+  svg.sp path,svg.sp polyline{stroke:#333 !important;fill:none !important;}
+  svg.sp circle{fill:#333 !important;}
   #print-header{display:block !important;}
   .mc2,.uc{background:#fff !important;border:1px solid #ddd !important;}
   a{color:#333 !important;text-decoration:underline !important;}
+  .liq-track,.liq-fill,.gf,.pf,.pb{print-color-adjust:exact !important;-webkit-print-color-adjust:exact !important;}
+  .cdot{display:none !important;}
 }
 
 </style>
@@ -451,7 +454,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
     </div>
     <span id="refresh-countdown"></span>
     <button class="rbtn" onclick="manualRefresh()">⟳ REFRESH</button>
-    <button class="settings-btn" onclick="(function(){document.getElementById('print-subtitle').textContent=document.querySelector('.tab.active')?.textContent?.trim()+' — '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});window.print()})()">📥 EXPORT</button>
+    <button class="settings-btn" onclick="(function(){var tab=document.querySelector('.tab.active'),id=tab?tab.dataset.tab:'',names={regime:'REGIME',overview:'OVERVIEW',rates:'RATES & CREDIT',liquidity:'LIQUIDITY',growth:'GROWTH & PMI',inflation:'INFLATION',housing:'HOUSING',student:'STUDENT HOUSING',markets:'MARKETS',scenarios:'SCENARIOS',underwrite:'UNDERWRITING',signals:'SIGNALS',realtime:'LIVE PRICES',news:'NEWS FEED',universities:'UNIVERSITIES',markets2:'MSA MARKETS',compare:'COMPARE'};document.getElementById('print-subtitle').textContent=(names[id]||id.toUpperCase())+' — '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});window.print()})()">📥 EXPORT</button>
     <button class="settings-btn" onclick="toggleDH()">⊞ DATA</button>
     <button class="settings-btn" onclick="showThemePicker()">◑ THEME</button>
     <button class="settings-btn" onclick="showSettings()">⚙ KEYS</button>
