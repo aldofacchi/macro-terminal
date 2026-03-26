@@ -135,6 +135,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 /* ══ SPARK ══ */
 .sw{margin-top:7px;height:36px;}
 svg.sp{width:100%;height:36px;overflow:visible;}
+.bigchart{display:block;max-width:100%;}
 
 /* ══ SH ══ */
 .sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:6px;}
@@ -453,8 +454,12 @@ svg.sp{width:100%;height:36px;overflow:visible;}
       <span style="color:var(--muted2)">--</span>
     </div>
     <span id="refresh-countdown"></span>
+    <input id="kpi-search" type="text" placeholder="Search KPIs..." style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:4px 10px;border-radius:3px;font-family:var(--mono);font-size:10px;width:140px;letter-spacing:1px" oninput="filterCards(this.value)">
+    <span id="search-count" style="font-size:8px;color:var(--muted2);margin-left:4px;letter-spacing:1px"></span>
     <button class="rbtn" onclick="manualRefresh()">⟳ REFRESH</button>
     <button class="settings-btn" onclick="(function(){var tab=document.querySelector('.tab.active'),id=tab?tab.dataset.tab:'',names={regime:'REGIME',overview:'OVERVIEW',rates:'RATES & CREDIT',liquidity:'LIQUIDITY',growth:'GROWTH & PMI',inflation:'INFLATION',housing:'HOUSING',student:'STUDENT HOUSING',markets:'MARKETS',scenarios:'SCENARIOS',underwrite:'UNDERWRITING',signals:'SIGNALS',realtime:'LIVE PRICES',news:'NEWS FEED',universities:'UNIVERSITIES',markets2:'MSA MARKETS',compare:'COMPARE'};document.getElementById('print-subtitle').textContent=(names[id]||id.toUpperCase())+' — '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});window.print()})()">📥 EXPORT</button>
+    <button class="settings-btn" onclick="exportAllTabs()" title="Export all tabs as one PDF">📋 ALL</button>
+    <button class="settings-btn" onclick="toggleDarkLight()" title="Toggle dark/light mode">☀</button>
     <button class="settings-btn" onclick="toggleDH()">⊞ DATA</button>
     <button class="settings-btn" onclick="showThemePicker()">◑ THEME</button>
     <button class="settings-btn" onclick="showSettings()">⚙ KEYS</button>
@@ -513,6 +518,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div style="font-size:11px;color:#666;margin-top:4px" id="print-subtitle"></div>
 </div>
 
+<div id="freshness-alert" style="display:none;padding:6px 18px;background:rgba(240,192,64,.08);border-bottom:1px solid rgba(240,192,64,.2);font-size:10px;color:var(--yellow);letter-spacing:1px"></div>
 <div class="main">
   <div class="panel active" id="tab-regime"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-overview"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
@@ -877,6 +883,17 @@ const THEMES = {
       '--stagflation':'#a0ff40', '--deflation':'#ff4040',
     }
   },
+  paper_white: {
+    name: 'PAPER WHITE', desc: 'Light mode for presentations & print',
+    vars: {
+      '--bg':'#f5f5f0','--bg2':'#eeeee8','--bg3':'#e8e8e2','--panel':'#ffffff',
+      '--border':'#d0d0c8','--border2':'#c0c0b8','--border3':'#b0b0a8',
+      '--green':'#0a8f5a','--red':'#d03040','--yellow':'#b08020','--blue':'#2060c0',
+      '--cyan':'#0080a0','--purple':'#7040b0','--orange':'#c06020',
+      '--white':'#1a1a18','--text':'#2a2a28','--muted':'#6a6a68','--muted2':'#8a8a88',
+      '--goldilocks':'#0a8f5a','--reflation':'#b08020','--stagflation':'#c06020','--deflation':'#2060c0'
+    }
+  },
 };
 
 const THEME_DEFAULT = 'obsidian';
@@ -896,6 +913,23 @@ function applyTheme(themeKey) {
 function loadSavedTheme() {
   const saved = localStorage.getItem('shmacro_theme') || THEME_DEFAULT;
   applyTheme(saved);
+}
+
+function toggleDarkLight() {
+  const current = localStorage.getItem('shmacro_theme') || 'obsidian';
+  const lightThemes = ['paper_white','arctic','titanium'];
+  const isLight = lightThemes.includes(current);
+  if (isLight) {
+    const saved = localStorage.getItem('shmacro_dark_theme') || 'obsidian';
+    applyTheme(saved);
+  } else {
+    try { localStorage.setItem('shmacro_dark_theme', current); } catch(_) {}
+    const lt = Object.keys(THEMES).find(k => {
+      const bg = THEMES[k]?.vars?.['--bg'] || '#000';
+      return parseInt(bg.replace('#',''), 16) > 0x888888;
+    });
+    applyTheme(lt || 'paper_white');
+  }
 }
 
 function buildThemePicker() {
@@ -1893,6 +1927,7 @@ async function fetchYahooAll() {
             if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
             const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
             const meta = j?.chart?.result?.[0]?.meta;
+            const result = j?.chart?.result?.[0];
             if (!meta?.regularMarketPrice) continue;
             const price     = meta.regularMarketPrice;
             const prevClose = meta.chartPreviousClose || meta.previousClose || price;
@@ -1908,6 +1943,19 @@ async function fetchYahooAll() {
               _source:   'yahoo',
               symbol:    sym,
             };
+            // Store Yahoo chart history in D[] for sparklines (GOLD, OIL, etc.)
+            const timestamps = result?.timestamp;
+            const closes = result?.indicators?.quote?.[0]?.close;
+            if (timestamps && closes && timestamps.length > 1) {
+              const FRED_KEY_MAP = {GOLD_RT:'GOLD',OIL_RT:'OIL',COPPER_RT:'COPPER',VIX_RT:'VIX',SP500_RT:'SP500',DXY_RT:'DXY'};
+              const fredKey = FRED_KEY_MAP[key];
+              if (fredKey && !D[fredKey]?.length) {
+                D[fredKey] = timestamps.map((ts, idx) => ({
+                  date: new Date(ts * 1000).toISOString().split('T')[0],
+                  value: closes[idx]
+                })).filter(p => p.value != null).reverse(); // newest first like FRED
+              }
+            }
             return true;
           } catch(e) { continue; }
         }
@@ -2003,6 +2051,40 @@ function generateFOMCDates(year) {
 }
 const _fomcYear = new Date().getFullYear();
 const FOMC_DATES_2026 = generateFOMCDates(_fomcYear);
+
+// BLS/Census release pattern detection
+function checkReleaseDay() {
+  const today = new Date();
+  const mm = today.getMonth(), dd = today.getDate(), dow = today.getDay();
+  const releases = [];
+  // NFP: 1st Friday of the month
+  if (dow === 5 && dd <= 7) releases.push({name:'NFP (PAYROLLS)', tab:'growth', series:'PAYROLLS'});
+  // CPI: typically 10th-14th of month
+  if (dd >= 10 && dd <= 14 && dow >= 1 && dow <= 5) releases.push({name:'CPI RELEASE', tab:'inflation', series:'CPI'});
+  // PPI: typically 14th-18th
+  if (dd >= 14 && dd <= 18 && dow >= 1 && dow <= 5) releases.push({name:'PPI RELEASE', tab:'inflation', series:'PPI_ALL'});
+  // Housing Starts: typically 17th-20th
+  if (dd >= 17 && dd <= 20 && dow >= 1 && dow <= 5) releases.push({name:'HOUSING STARTS', tab:'housing', series:'HOUSING_STARTS'});
+  // GDP: last week of month in Jan/Apr/Jul/Oct (advance estimate)
+  if ([0,3,6,9].includes(mm) && dd >= 25 && dow >= 1 && dow <= 5) releases.push({name:'GDP ADVANCE', tab:'growth', series:'GDP'});
+
+  if (releases.length > 0) {
+    const banner = document.getElementById('freshness-alert');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(0,229,255,.06)';
+      banner.style.borderColor = 'rgba(0,229,255,.2)';
+      banner.style.color = 'var(--cyan)';
+      banner.textContent = '\uD83D\uDCCA DATA RELEASE WINDOW: ' + releases.map(r => r.name).join(' \u00B7 ') + ' \u2014 watch for intraday updates';
+    }
+    // Add pulse to relevant tabs
+    releases.forEach(r => {
+      document.querySelectorAll('.tab').forEach(t => {
+        if (t.dataset.tab === r.tab) t.style.textShadow = '0 0 8px var(--cyan)';
+      });
+    });
+  }
+}
 
 let FEDWATCH_DATA   = [];   // [{label, date, impliedRate, holdPct, cutPct, hikePct, futuresPrice}]
 let FEDWATCH_LOADED = false;
@@ -3052,6 +3134,7 @@ async function fetchAll(force=false) {
   setStatus(`LIVE: ${ok+rtCovered} · STALE: ${stale} · ERR: ${err}`, color);
   updateDHPanel();
   updateDHDot(ok, err, stale, keys.length);
+  checkFreshnessAlerts();
 }
 
 function setStatus(text, color) {
@@ -3075,6 +3158,27 @@ function updateDHPanel() {
   }).join('');
 }
 function toggleDH() { document.getElementById('dh-panel').classList.toggle('open'); updateDHPanel(); }
+
+function checkFreshnessAlerts() {
+  const el = document.getElementById('freshness-alert');
+  if (!el) return;
+  const critical = ['T10Y','FEDFUNDS','CPI','GDP','HOUSING_STARTS','CORE_PCE','UNRATE','MORT30'];
+  const now = Date.now();
+  const stale = critical.filter(k => {
+    const d = latestDate(k);
+    if (!d) return false;
+    const age = now - new Date(d).getTime();
+    const freq = SERIES[k]?.freq;
+    const threshold = freq === 'daily' ? 3*86400000 : freq === 'weekly' ? 10*86400000 : 45*86400000;
+    return age > threshold;
+  });
+  if (stale.length > 0) {
+    el.style.display = 'block';
+    el.textContent = '\u26A0 STALE DATA: ' + stale.map(k => k + ' (' + latestDate(k) + ')').join(' \u00B7 ');
+  } else {
+    el.style.display = 'none';
+  }
+}
 
 // ── SETUP ──
 function showSettings() {
@@ -3268,6 +3372,7 @@ document.getElementById('main-tabs').addEventListener('click', e => {
   if (!tab?.dataset.tab) return;
   const name = tab.dataset.tab;
   ACTIVE_TAB = name;
+  const si = document.getElementById('kpi-search'); if (si) { si.value = ''; filterCards(''); }
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   tab.classList.add('active');
@@ -3285,6 +3390,100 @@ function renderTab(name) {
     realtime:renderRealtime, compare:renderCompare,
   };
   if (map[name]) map[name]();
+}
+
+// ── SEARCH / FILTER ──
+function filterCards(q) {
+  const panel = document.querySelector('.panel.active');
+  if (!panel) return;
+  const cards = panel.querySelectorAll('.card,.mc2,.uc');
+  const term = q.toLowerCase().trim();
+  let shown = 0, total = cards.length;
+  cards.forEach(c => {
+    if (!term) { c.style.display = ''; shown++; return; }
+    const match = c.textContent.toLowerCase().includes(term);
+    c.style.display = match ? '' : 'none';
+    if (match) shown++;
+  });
+  const badge = document.getElementById('search-count');
+  if (badge) badge.textContent = term ? `${shown}/${total}` : '';
+}
+
+// ── NOTES / ANNOTATIONS ──
+let CARD_NOTES = {};
+try { CARD_NOTES = JSON.parse(localStorage.getItem('shmacro_notes') || '{}'); } catch(_) {}
+
+function toggleNote(key) {
+  const existing = document.getElementById('note-editor-' + key);
+  if (existing) { existing.remove(); return; }
+  const card = document.querySelector('[data-note-key="' + key + '"]');
+  if (!card) return;
+  const note = CARD_NOTES[key] || '';
+  const editor = document.createElement('div');
+  editor.id = 'note-editor-' + key;
+  editor.style.cssText = 'margin-top:6px;padding:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px';
+  editor.innerHTML = '<textarea style="width:100%;height:40px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:9px;font-family:var(--mono);padding:4px;border-radius:2px;resize:vertical" placeholder="Add a note...">' + (note||'').replace(/</g,'&lt;') + '</textarea>'
+    + '<div style="display:flex;gap:6px;margin-top:4px"><button class="rbtn" onclick="saveNote(\'' + key + '\',this.parentElement.previousElementSibling.value)">Save</button><button class="rbtn" onclick="deleteNote(\'' + key + '\')">Delete</button></div>';
+  card.appendChild(editor);
+}
+function saveNote(key, text) {
+  text = text.trim();
+  if (text) CARD_NOTES[key] = text; else delete CARD_NOTES[key];
+  try { localStorage.setItem('shmacro_notes', JSON.stringify(CARD_NOTES)); } catch(_) {}
+  const editor = document.getElementById('note-editor-' + key);
+  if (editor) editor.remove();
+  const badge = document.querySelector('[data-note-key="' + key + '"] .note-badge');
+  if (badge) badge.style.display = text ? 'inline' : 'none';
+}
+function deleteNote(key) { saveNote(key, ''); }
+
+// ── HISTORICAL COMPARISON BADGES ──
+function histBadge(key, periods, label) {
+  const curr = val(key), prev = prv(key, periods);
+  if (curr == null || prev == null) return '';
+  const diff = curr - prev;
+  const sign = diff >= 0 ? '+' : '';
+  const color = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--muted2)';
+  const fmt = Math.abs(curr) >= 100 ? diff.toFixed(0) : diff.toFixed(2);
+  return `<span style="font-size:8px;color:${color};margin-left:6px" title="${label}: was ${prev.toFixed(2)}">${label} ${sign}${fmt}</span>`;
+}
+
+// ── SCENARIO PROBABILITY SLIDERS ──
+window._scenProbs = window._scenProbs || {base:55, bull:20, bear:25};
+
+function updateScenProb(which, val) {
+  window._scenProbs[which] = val;
+  const others = ['base','bull','bear'].filter(k => k !== which);
+  const remaining = 100 - val;
+  const ratio0 = window._scenProbs[others[0]] / (window._scenProbs[others[0]] + window._scenProbs[others[1]] || 1);
+  window._scenProbs[others[0]] = Math.round(remaining * ratio0);
+  window._scenProbs[others[1]] = remaining - window._scenProbs[others[0]];
+  window._scenProbs[others[0]] = Math.max(5, window._scenProbs[others[0]]);
+  window._scenProbs[others[1]] = Math.max(5, window._scenProbs[others[1]]);
+  const total = window._scenProbs.base + window._scenProbs.bull + window._scenProbs.bear;
+  if (total !== 100) window._scenProbs[which] += (100 - total);
+  renderScenarios();
+}
+
+// ── MULTI-TAB EXPORT ──
+function exportAllTabs() {
+  document.getElementById('print-subtitle').textContent = 'ALL TABS — ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const tabs = ['regime','overview','rates','liquidity','growth','inflation','housing','student','markets','scenarios','underwrite','signals','realtime','news','universities','markets2'];
+  tabs.forEach(t => { DONE[t]=true; renderTab(t); });
+  document.querySelectorAll('.panel').forEach(p => p.classList.add('active'));
+  const breakStyle = document.createElement('style');
+  breakStyle.id = 'export-all-breaks';
+  breakStyle.textContent = '.panel{page-break-before:always !important;} .panel:first-of-type{page-break-before:auto !important;}';
+  document.head.appendChild(breakStyle);
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.getElementById('export-all-breaks')?.remove();
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const active = document.querySelector('.tab.active');
+      if (active) document.getElementById('tab-' + active.dataset.tab)?.classList.add('active');
+    }, 500);
+  }, 200);
 }
 
 // ── INIT ──
@@ -3734,6 +3933,7 @@ async function startTerminal() {
   scheduleFinnhubRefresh();// Economic calendar: 12h
   scheduleFinnhubQuotes(); // Finnhub REST quotes: 15s market hours, 5min off
   startFinnhubWS();        // Streaming prices via Finnhub WebSocket (Tier 1)
+  checkReleaseDay();
 }
 
 // ── CLEANUP — stop all timers and WebSocket on page unload ──
@@ -3904,17 +4104,76 @@ function spark(data, color='var(--green)', h=36) {
   </svg>`;
 }
 
+function bigChart(key, label, color='var(--green)', h=120) {
+  const raw = D[key]; if (!raw || raw.length < 3) return '';
+  const data = raw.slice(0, 60).reverse();
+  const w = 600, pad = 40;
+  const vals = data.map(d => d.value);
+  const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1;
+  const pts = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1)) * (w - pad * 2);
+    const y = 10 + (1 - (v - mn) / rng) * (h - 24);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const last = pts[pts.length - 1].split(',');
+  const dates = data.map(d => d.date);
+  const valsAttr = vals.map(v => v.toFixed(4)).join(',');
+  const datesAttr = dates.join(',');
+  const yMid = ((mn + mx) / 2);
+  const fmt = v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v >= 100 ? v.toFixed(0) : v.toFixed(2);
+  const dFmt = d => d ? d.substring(5) : '';
+  const xFirst = dates[0], xMid = dates[Math.floor(dates.length/2)], xLast = dates[dates.length-1];
+
+  return `<svg class="sp bigchart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"
+    data-vals="${valsAttr}" data-dates="${datesAttr}" data-w="${w}" data-h="${h}" data-mn="${mn}" data-rng="${rng}" data-pad="${pad}"
+    style="cursor:crosshair;width:100%;height:${h}px;margin:8px 0"
+    onmousemove="(function(e,s){
+      var r=s.getBoundingClientRect(),rx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),
+          vals=s.dataset.vals.split(',').map(Number),dates=s.dataset.dates.split(','),
+          w=+s.dataset.w,h=+s.dataset.h,mn=+s.dataset.mn,rng=+s.dataset.rng,pad=+s.dataset.pad,
+          i=Math.round(rx*(vals.length-1)),v=vals[Math.max(0,Math.min(i,vals.length-1))],
+          d=dates[Math.max(0,Math.min(i,dates.length-1))],
+          x=pad+(i/(vals.length-1))*(w-pad*2),y=10+(1-(v-mn)/rng)*(h-24),
+          lbl=v>=10000?v.toFixed(0):v>=1000?v.toFixed(1):v>=100?v.toFixed(1):v.toFixed(2),
+          dlbl=d||'',tw=(lbl.length+dlbl.length+3)*5+12,tx=Math.max(pad+tw/2,Math.min(x,w-pad-tw/2)),ty=Math.max(14,y-14);
+      var hl=s._hl||(s._hl=s.querySelector('.sp-hl')),hd=s._hd||(s._hd=s.querySelector('.sp-hd')),
+          bg=s._bg||(s._bg=s.querySelector('.sp-bg')),ht=s._ht||(s._ht=s.querySelector('.sp-ht'));
+      hl.setAttribute('x1',x);hl.setAttribute('x2',x);hl.style.display='';
+      hd.setAttribute('cx',x);hd.setAttribute('cy',y);hd.style.display='';
+      bg.setAttribute('x',tx-tw/2);bg.setAttribute('y',ty-11);bg.setAttribute('width',tw);bg.style.display='';
+      ht.textContent=dlbl+' · '+lbl;ht.setAttribute('x',tx);ht.setAttribute('y',ty);ht.style.display='';
+    })(event,this)"
+    onmouseleave="var s=this,hl=s._hl||s.querySelector('.sp-hl'),hd=s._hd||s.querySelector('.sp-hd'),bg=s._bg||s.querySelector('.sp-bg'),ht=s._ht||s.querySelector('.sp-ht');hl.style.display='none';hd.style.display='none';bg.style.display='none';ht.style.display='none'">
+    <path d="M${pts[0]} ${pts.map(p=>'L'+p).join(' ')} L${last[0]},${h-4} L${pts[0].split(',')[0]},${h-4} Z" fill="${color}" opacity="0.06"/>
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/>
+    <text x="${pad-4}" y="14" font-size="8" fill="var(--muted2)" text-anchor="end" font-family="JetBrains Mono,monospace">${fmt(mx)}</text>
+    <text x="${pad-4}" y="${h/2+2}" font-size="8" fill="var(--muted2)" text-anchor="end" font-family="JetBrains Mono,monospace">${fmt(yMid)}</text>
+    <text x="${pad-4}" y="${h-8}" font-size="8" fill="var(--muted2)" text-anchor="end" font-family="JetBrains Mono,monospace">${fmt(mn)}</text>
+    <text x="${pad}" y="${h}" font-size="7" fill="var(--muted2)" font-family="JetBrains Mono,monospace">${dFmt(xFirst)}</text>
+    <text x="${w/2}" y="${h}" font-size="7" fill="var(--muted2)" text-anchor="middle" font-family="JetBrains Mono,monospace">${dFmt(xMid)}</text>
+    <text x="${w-pad}" y="${h}" font-size="7" fill="var(--muted2)" text-anchor="end" font-family="JetBrains Mono,monospace">${dFmt(xLast)}</text>
+    <line x1="${pad}" y1="${h-4}" x2="${w-pad}" y2="${h-4}" stroke="var(--border)" stroke-width="0.5"/>
+    <line x1="${pad}" y1="8" x2="${pad}" y2="${h-4}" stroke="var(--border)" stroke-width="0.5"/>
+    <line class="sp-hl" x1="0" y1="0" x2="0" y2="${h}" stroke="${color}" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.6" style="display:none"/>
+    <circle class="sp-hd" cx="0" cy="0" r="4" fill="${color}" stroke="var(--white)" stroke-width="1.5" style="display:none"/>
+    <rect class="sp-bg" x="0" y="0" width="0" height="14" rx="3" fill="var(--panel)" stroke="${color}" stroke-width="0.5" opacity="0.95" style="display:none"/>
+    <text class="sp-ht" x="0" y="0" font-size="9" font-weight="600" fill="var(--white)" text-anchor="middle" font-family="JetBrains Mono,monospace" style="display:none;pointer-events:none"></text>
+  </svg>`;
+}
+
 function mc(title, value, chgHtml, label, spHtml, cls='', fkey='') {
   const dc=cls==='pos'?'var(--green)':cls==='neg'?'var(--red)':cls==='warn'?'var(--yellow)':
            cls==='purp'?'var(--purple)':cls==='info'?'var(--blue)':cls==='oran'?'var(--orange)':'var(--muted)';
   const tag = fkey ? freshnessTag(fkey) : '';
   const tipAttr = fkey && KPI_TIPS[fkey] ? ' data-tip="'+fkey+'" style="cursor:help"' : '';
-  return `<div class="card">
-    <div class="ct"><div class="ct-left"><span class="cdot" style="background:${dc}"></span><span${tipAttr}>${title}</span></div>${tag}</div>
+  return `<div class="card"${fkey ? ' data-note-key="'+fkey+'"' : ''}>
+    <div class="ct"><div class="ct-left"><span class="cdot" style="background:${dc}"></span><span${tipAttr}>${title}</span>${fkey ? '<span class="note-badge" style="display:'+(CARD_NOTES[fkey]?'inline':'none')+';color:var(--yellow);font-size:8px;cursor:pointer;margin-left:4px" onclick="event.stopPropagation();toggleNote(\''+fkey+'\')">📝</span>' : ''}</div>${tag}</div>
     <div class="bv ${cls}">${value}</div>
     <div class="vc">${chgHtml}</div>
     <div class="vl">${label}</div>
     ${spHtml?`<div class="sw">${spHtml}</div>`:''}
+    ${fkey ? '<div style="font-size:8px;margin-top:2px">' + histBadge(fkey,1,'1M') + histBadge(fkey,3,'3M') + histBadge(fkey,12,'1Y') + '</div>' : ''}
   </div>`;
 }
 
@@ -4295,6 +4554,15 @@ function renderOverview() {
     <div class="comm" style="border-left-color:${R.color}">
       <div class="ct2" style="color:${R.color}">▸ REGIME: ${R.regime} — CURRENT STANCE</div>
       <p>${R.reImpl} Yield curve: <strong>${R.ycR}</strong>. Real FFR: <strong>${fv(ff&&cpce?ff-cpce:null,2,'%')}</strong> — ${ff&&cpce&&ff-cpce>1.5?'meaningfully restrictive. Rate relief = direct NAV expansion.':'approaching neutral — watch for the inflection point.'}</p>
+    </div>
+    ${sh('TREND CHARTS','60-PERIOD HISTORY · HOVER FOR VALUES')}
+    <div class="g2">
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>10Y TREASURY</div>${freshnessTag('T10Y')}</div>${bigChart('T10Y','10Y Yield','var(--cyan)')}</div>
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--yellow)"></span>CORE CPI YOY</div>${freshnessTag('CORE_CPI')}</div>${bigChart('CORE_CPI','Core CPI','var(--yellow)')}</div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--blue)"></span>FED BALANCE SHEET</div>${freshnessTag('FED_BS')}</div>${bigChart('FED_BS','Fed BS','var(--blue)')}</div>
+      <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>HOUSING STARTS</div>${freshnessTag('HOUSING_STARTS')}</div>${bigChart('HOUSING_STARTS','Starts','var(--green)')}</div>
     </div>`;
 }
 
@@ -4667,21 +4935,36 @@ function renderScenarios() {
   const R=computeRegime(); const t10=val('T10Y')||4.5,ff=val('FEDFUNDS')||5.33,cpce=yoy('CORE_PCE')||2.8;
   const sofr=val('SOFR')||5.3;
   const scens=[
-    {type:'base',label:'BASE CASE',prob:55,name:'Soft Landing → Rate Normalization',
+    {type:'base',label:'BASE CASE',prob:window._scenProbs.base,name:'Soft Landing → Rate Normalization',
      desc:`Growth holds near trend (GDP 1.5-2.5%), Core PCE decelerates to ~2.3%, Fed cuts 75-100bps over 12 months. 10Y settles at ${fv(t10-0.5,2,'%')}-${fv(t10-0.25,2,'%')}.`,
      impacts:[['10Y Range',fv(t10-0.75,2,'%')+'-'+fv(t10-0.25,2,'%'),'var(--green)'],['Cap Floor',fv(t10-0.5+1.5,2,'%'),'var(--green)'],['Rent Growth (SH)','+3.5-5.5%','var(--green)'],['Tx Volume','+15-25%','var(--green)'],['Financing','IMPROVING','var(--green)'],['Playbook','DEPLOY','var(--green)']]},
-    {type:'bull',label:'BULL CASE',prob:20,name:'Goldilocks + Multiple Cuts',
+    {type:'bull',label:'BULL CASE',prob:window._scenProbs.bull,name:'Goldilocks + Multiple Cuts',
      desc:'Inflation drops to ~2.0% faster than expected. Fed cuts 150-200bps. 10Y falls to '+fv(t10-1.0,2,'%')+'-'+fv(t10-0.75,2,'%')+'. Strong employment, risk assets surge.',
      impacts:[['10Y Range',fv(t10-1.5,2,'%')+'-'+fv(t10-0.75,2,'%'),'var(--cyan)'],['Cap Floor',fv(t10-1.0+1.5,2,'%'),'var(--cyan)'],['Rent Growth (SH)','+5-8%','var(--cyan)'],['Tx Volume','+30-50%','var(--cyan)'],['Financing','ABUNDANT','var(--cyan)'],['Playbook','MAX OFFENSE','var(--cyan)']]},
-    {type:'bear',label:'BEAR CASE',prob:25,name:'Stagflation / Higher for Longer',
+    {type:'bear',label:'BEAR CASE',prob:window._scenProbs.bear,name:'Stagflation / Higher for Longer',
      desc:'Inflation re-accelerates (tariffs, oil, wages). Core PCE stays >3%. Fed unable to cut. 10Y rises to '+fv(t10+0.5,2,'%')+'-'+fv(t10+1.0,2,'%')+'. CRE stress intensifies.',
      impacts:[['10Y Range',fv(t10+0.25,2,'%')+'-'+fv(t10+1.0,2,'%'),'var(--red)'],['Cap Floor',fv(t10+0.75+1.5,2,'%'),'var(--red)'],['Rent Growth (SH)','+1-2%','var(--red)'],['Tx Volume','-20-35%','var(--red)'],['Financing','RESTRICTED','var(--red)'],['Playbook','DEFENSE','var(--red)']]}
   ];
   document.getElementById('tab-scenarios').innerHTML=`
     ${sh('SCENARIO PLANNING MATRIX','CAPITAL FLOWS FRAMEWORK · PROBABILITY-WEIGHTED')}
+    <div class="card" style="margin-bottom:12px">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>PROBABILITY WEIGHTS</div><span class="freshness fresh">ADJUSTABLE</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px">
+        <div><div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">BASE CASE</div>
+          <input type="range" min="10" max="80" value="${window._scenProbs.base}" style="width:100%;accent-color:var(--green)" oninput="updateScenProb('base',+this.value)">
+          <div style="font-size:14px;font-weight:700;color:var(--green);font-family:'Orbitron',monospace">${window._scenProbs.base}%</div></div>
+        <div><div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">BULL CASE</div>
+          <input type="range" min="5" max="60" value="${window._scenProbs.bull}" style="width:100%;accent-color:var(--cyan)" oninput="updateScenProb('bull',+this.value)">
+          <div style="font-size:14px;font-weight:700;color:var(--cyan);font-family:'Orbitron',monospace">${window._scenProbs.bull}%</div></div>
+        <div><div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">BEAR CASE</div>
+          <input type="range" min="5" max="60" value="${window._scenProbs.bear}" style="width:100%;accent-color:var(--red)" oninput="updateScenProb('bear',+this.value)">
+          <div style="font-size:14px;font-weight:700;color:var(--red);font-family:'Orbitron',monospace">${window._scenProbs.bear}%</div></div>
+      </div>
+      <div style="font-size:8px;color:var(--muted2);margin-top:6px;text-align:center">Total: ${window._scenProbs.base+window._scenProbs.bull+window._scenProbs.bear}% · Drag sliders to model different probability distributions</div>
+    </div>
     <div class="comm" style="border-left-color:${R.color}">
-      <div class="ct2" style="color:${R.color}">▸ CURRENT REGIME: ${R.regime} · PROBABILITY-WEIGHTED 10Y: ${fv(t10*.55+(t10-1.0)*.20+(t10+.75)*.25,2,'%')} vs CURRENT ${fv(t10,2,'%')}</div>
-      <p>Underwrite all deals to <strong>survive Bear Case</strong> and <strong>thrive in Base Case</strong>. The probability-weighted expected 10Y is <strong>${fv(t10*.55+(t10-1.0)*.20+(t10+.75)*.25,2,'%')}</strong>. Any deal requiring a sub-${fv(t10*.55+(t10-1.0)*.20+(t10+.75)*.25+1.5,2,'%')} exit cap to hit your return target is making an implicit bet on the Bull scenario.</p>
+      <div class="ct2" style="color:${R.color}">▸ CURRENT REGIME: ${R.regime} · PROBABILITY-WEIGHTED 10Y: ${fv(t10*(window._scenProbs.base/100)+(t10-1.0)*(window._scenProbs.bull/100)+(t10+.75)*(window._scenProbs.bear/100),2,'%')} vs CURRENT ${fv(t10,2,'%')}</div>
+      <p>Underwrite all deals to <strong>survive Bear Case</strong> and <strong>thrive in Base Case</strong>. The probability-weighted expected 10Y is <strong>${fv(t10*(window._scenProbs.base/100)+(t10-1.0)*(window._scenProbs.bull/100)+(t10+.75)*(window._scenProbs.bear/100),2,'%')}</strong>. Any deal requiring a sub-${fv(t10*(window._scenProbs.base/100)+(t10-1.0)*(window._scenProbs.bull/100)+(t10+.75)*(window._scenProbs.bear/100)+1.5,2,'%')} exit cap to hit your return target is making an implicit bet on the Bull scenario.</p>
     </div>
     <div class="scen-grid">
       ${scens.map(s=>`<div class="sc-card ${s.type}">
