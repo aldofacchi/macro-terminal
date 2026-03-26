@@ -1096,7 +1096,9 @@ const SERIES = {
   CONF:          {id:'UMCSENT',         freq:'monthly',   lim:48},
   // ── INTERMARKET ──
   OIL:           {id:'DCOILWTICO',      freq:'daily',     lim:90},
-  GOLD:          {id:'GOLDAMGBD228NLBM', freq:'daily',    lim:90},
+  // GOLD removed from FRED — GOLDAMGBD228NLBM is unreliable (frequent 404/timeout).
+  // Gold price sourced exclusively via Yahoo Finance GC=F → RT['GOLD_RT'].
+  // val('GOLD') falls back to GOLD_RT via YAHOO_RT_FALLBACK mapping.
   COPPER:        {id:'PCOPPUSDM',       freq:'monthly',   lim:48},
   DXY:           {id:'DTWEXBGS',        freq:'daily',     lim:90},
   VIX:           {id:'VIXCLS',          freq:'daily',     lim:90},
