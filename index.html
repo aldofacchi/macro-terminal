@@ -99,8 +99,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .re-stock-detail{display:none;background:var(--bg3);}
 .re-stock-detail.open{display:table-row;}
 .re-stock-detail td{padding:14px 16px;}
-.re-detail-grid{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;}
-@media(max-width:900px){.re-detail-grid{grid-template-columns:1fr;}}
+.re-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
+@media(max-width:1200px){.re-detail-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.re-detail-grid{grid-template-columns:1fr;}}
 .re-expand-arrow{font-size:9px;margin-right:4px;transition:transform .2s;display:inline-block;color:var(--muted2);}
 .re-stock-row.expanded .re-expand-arrow{transform:rotate(90deg);color:var(--cyan);}
 .re-detail-section{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px 12px;}
@@ -1974,7 +1975,7 @@ async function fetchREStocks() {
 let RE_STOCKS_EXPANDED = new Set();
 async function fetchREStockDetail(sym) {
   if (RE_STOCK_DATA[sym]?.detail && Date.now() - RE_STOCK_DATA[sym].detail._ts < 1800000) return RE_STOCK_DATA[sym].detail;
-  const modules = 'price,summaryDetail,defaultKeyStatistics,financialData,assetProfile';
+  const modules = 'price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,earningsHistory,earningsTrend,incomeStatementHistory,balanceSheetHistory';
   const url = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/' + encodeURIComponent(sym) + '?modules=' + modules;
   const proxies = [
     'https://corsproxy.io/?' + encodeURIComponent(url),
@@ -2025,6 +2026,40 @@ async function fetchREStockDetail(sym) {
         summary: ap.longBusinessSummary || null,
         _ts: Date.now()
       };
+        // Earnings history
+        const eh = r.earningsHistory?.history || [];
+        detail.earningsHistory = eh.slice(0,4).map(q => ({
+          date: q.quarter?.fmt || '',
+          epsActual: q.epsActual?.raw ?? null,
+          epsEstimate: q.epsEstimate?.raw ?? null,
+          surprise: q.epsSurprise?.raw ?? null,
+          surprisePct: q.epsSurprisePercent?.raw ?? null,
+        }));
+        // Earnings trend (forward estimates)
+        const et = r.earningsTrend?.trend || [];
+        detail.earningsTrend = et.slice(0,2).map(t => ({
+          period: t.period || '',
+          growth: t.growth?.raw ?? null,
+          epsAvg: t.earningsEstimate?.avg?.raw ?? null,
+          revAvg: t.revenueEstimate?.avg?.raw ?? null,
+        }));
+        // Recent quarterly revenue & net income
+        const isHist = r.incomeStatementHistory?.incomeStatementHistory || [];
+        detail.recentIncome = isHist.slice(0,2).map(q => ({
+          date: q.endDate?.fmt || '',
+          revenue: q.totalRevenue?.raw ?? null,
+          netIncome: q.netIncome?.raw ?? null,
+          grossProfit: q.grossProfit?.raw ?? null,
+        }));
+        // Balance sheet summary
+        const bsHist = r.balanceSheetHistory?.balanceSheetStatements || [];
+        if (bsHist.length) {
+          const bs = bsHist[0];
+          detail.totalAssets = bs.totalAssets?.raw ?? null;
+          detail.totalLiabilities = bs.totalLiab?.raw ?? null;
+          detail.totalDebt = bs.longTermDebt?.raw ?? null;
+          detail.cash = bs.cash?.raw ?? null;
+        }
       if (!RE_STOCK_DATA[sym]) RE_STOCK_DATA[sym] = {};
       RE_STOCK_DATA[sym].detail = detail;
       return detail;
@@ -3322,6 +3357,8 @@ function buildREDetailPanel(sym) {
   function fmtMktCap(v) { if (!v) return '--'; if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T'; if (v >= 1e9) return '$'+(v/1e9).toFixed(2)+'B'; if (v >= 1e6) return '$'+(v/1e6).toFixed(0)+'M'; return '$'+(v||0).toLocaleString(); }
   function pf(v, suffix='') { if (v == null) return '--'; return typeof v === 'number' ? v.toFixed(2) + suffix : v + suffix; }
   function pctF(v) { if (v == null) return '--'; return (v * 100).toFixed(1) + '%'; }
+  function fmtB(v) { if (!v) return '--'; if (v >= 1e12) return '$'+(v/1e12).toFixed(1)+'T'; if (v >= 1e9) return '$'+(v/1e9).toFixed(1)+'B'; if (v >= 1e6) return '$'+(v/1e6).toFixed(0)+'M'; return '$'+(v/1e3).toFixed(0)+'K'; }
+  function fmtVol(v) { if (!v) return '--'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(0)+'K'; return v; }
 
   // 52-week range bar
   const w52h = det.fiftyTwoWeekHigh || d.fiftyTwoWeekHigh;
@@ -3329,7 +3366,6 @@ function buildREDetailPanel(sym) {
   let w52bar = '';
   if (w52h && w52l && price) {
     const pct = Math.max(0, Math.min(100, ((price - w52l) / (w52h - w52l)) * 100));
-    const barColor = pct > 50 ? 'var(--green)' : 'var(--red)';
     w52bar = `<div style="margin:8px 0">
       <div style="font-size:8px;color:var(--muted2);margin-bottom:3px;display:flex;justify-content:space-between"><span>52W LOW: $${w52l.toFixed(2)}</span><span>52W HIGH: $${w52h.toFixed(2)}</span></div>
       <div class="re-52w-bar" style="background:linear-gradient(90deg,var(--red)20,var(--bg2) 20%,var(--bg2) 80%,var(--green)20 80%)">
@@ -3390,7 +3426,7 @@ function buildREDetailPanel(sym) {
   const relatedNews = (NEWS_DATA || []).filter(a => {
     const txt = ((a.title||'') + ' ' + (a.description||'')).toLowerCase();
     return symRegex.test(txt) || nameWords.some(w => txt.includes(w.toLowerCase()));
-  }).slice(0, 4);
+  }).slice(0, 6);
 
   const newsHtml = relatedNews.length ? relatedNews.map(a =>
     `<div class="re-news-item"><a href="${escUrl(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a>
@@ -3398,59 +3434,151 @@ function buildREDetailPanel(sym) {
   ).join('') : '<div style="font-size:9px;color:var(--muted2);padding:8px 0">No recent headlines for this ticker.</div>';
 
   // Description
-  const descText = det.summary ? esc(det.summary).substring(0, 280) + (det.summary.length > 280 ? '...' : '') : esc(cfg.desc || '');
+  const descText = det.summary ? esc(det.summary).substring(0, 400) + (det.summary.length > 400 ? '...' : '') : esc(cfg.desc || '');
 
-  return `<div class="re-detail-grid">
-    <div class="re-detail-section">
-      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">KEY FINANCIALS</div>
+  // Earnings history table
+  const ehData = det.earningsHistory || [];
+  const earningsHtml = ehData.length ? `<div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px">EARNINGS HISTORY (QUARTERLY)</div>
+    <table class="re-dt">
+      <tr style="font-size:7px;color:var(--muted2);letter-spacing:1px"><td>QUARTER</td><td style="text-align:right">EPS ACT</td><td style="text-align:right">EPS EST</td><td style="text-align:right">SURPRISE</td></tr>
+      ${ehData.map(q => {
+        const beatColor = q.surprise != null ? (q.surprise > 0 ? 'var(--green)' : q.surprise < 0 ? 'var(--red)' : 'var(--muted2)') : 'var(--muted2)';
+        const beatIcon = q.surprise != null ? (q.surprise > 0 ? '✓ BEAT' : q.surprise < 0 ? '✗ MISS' : '— MET') : '--';
+        return `<tr><td>${q.date}</td><td style="text-align:right;color:var(--white)">${q.epsActual != null ? '$'+q.epsActual.toFixed(2) : '--'}</td><td style="text-align:right">${q.epsEstimate != null ? '$'+q.epsEstimate.toFixed(2) : '--'}</td><td style="text-align:right;color:${beatColor};font-weight:600">${beatIcon}${q.surprisePct != null ? ' ('+((q.surprisePct)*100).toFixed(1)+'%)' : ''}</td></tr>`;
+      }).join('')}
+    </table>` : '';
+
+  // Earnings estimates (forward)
+  const etData = det.earningsTrend || [];
+  const estimatesHtml = etData.length ? `<div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px">FORWARD ESTIMATES</div>
+    <table class="re-dt">
+      <tr style="font-size:7px;color:var(--muted2);letter-spacing:1px"><td>PERIOD</td><td style="text-align:right">EPS EST</td><td style="text-align:right">REV EST</td><td style="text-align:right">GROWTH</td></tr>
+      ${etData.map(t => `<tr><td>${t.period}</td><td style="text-align:right;color:var(--white)">${t.epsAvg != null ? '$'+t.epsAvg.toFixed(2) : '--'}</td><td style="text-align:right">${t.revAvg ? fmtB(t.revAvg) : '--'}</td><td style="text-align:right;color:${t.growth != null && t.growth > 0 ? 'var(--green)' : 'var(--red)'}">${t.growth != null ? (t.growth*100).toFixed(1)+'%' : '--'}</td></tr>`).join('')}
+    </table>` : '';
+
+  // Income statement
+  const incData = det.recentIncome || [];
+  const incomeHtml = incData.length ? `<div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px">INCOME STATEMENT</div>
+    <table class="re-dt">
+      <tr style="font-size:7px;color:var(--muted2);letter-spacing:1px"><td>PERIOD</td><td style="text-align:right">REVENUE</td><td style="text-align:right">GROSS PROFIT</td><td style="text-align:right">NET INCOME</td></tr>
+      ${incData.map(q => `<tr><td>${q.date}</td><td style="text-align:right;color:var(--white)">${fmtB(q.revenue)}</td><td style="text-align:right">${fmtB(q.grossProfit)}</td><td style="text-align:right;color:${q.netIncome > 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(q.netIncome)}</td></tr>`).join('')}
+    </table>` : '';
+
+  // Balance sheet summary
+  let bsHtml = '';
+  if (det.totalAssets || det.totalDebt || det.cash) {
+    bsHtml = `<div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px">BALANCE SHEET</div>
       <table class="re-dt">
-        <tr><td>MARKET CAP</td><td>${fmtMktCap(det.marketCap)}</td></tr>
+        <tr><td>TOTAL ASSETS</td><td style="text-align:right;color:var(--white)">${fmtB(det.totalAssets)}</td></tr>
+        <tr><td>TOTAL LIABILITIES</td><td style="text-align:right;color:var(--yellow)">${fmtB(det.totalLiabilities)}</td></tr>
+        <tr><td>LONG-TERM DEBT</td><td style="text-align:right;color:${det.totalDebt && det.totalAssets && det.totalDebt/det.totalAssets > 0.5 ? 'var(--red)' : 'var(--white)'}">${fmtB(det.totalDebt)}</td></tr>
+        <tr><td>CASH & EQUIV</td><td style="text-align:right;color:var(--green)">${fmtB(det.cash)}</td></tr>
+        ${det.totalAssets && det.totalLiabilities ? `<tr><td>EQUITY</td><td style="text-align:right;color:var(--cyan)">${fmtB(det.totalAssets - det.totalLiabilities)}</td></tr>` : ''}
+        ${det.totalDebt && det.totalAssets ? `<tr><td>LEVERAGE RATIO</td><td style="text-align:right;color:${det.totalDebt/det.totalAssets > 0.5 ? 'var(--red)' : 'var(--green)'};font-weight:600">${(det.totalDebt/det.totalAssets*100).toFixed(1)}%</td></tr>` : ''}
+      </table>`;
+  }
+
+  // Moving average signals
+  let maSignals = '';
+  if (det.fiftyDayAvg && det.twoHundredDayAvg && price) {
+    const above50 = price > det.fiftyDayAvg;
+    const above200 = price > det.twoHundredDayAvg;
+    const goldenCross = det.fiftyDayAvg > det.twoHundredDayAvg;
+    maSignals = `<div style="margin-top:8px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:3px">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:6px">MOVING AVERAGE SIGNALS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:9px">
+        <span style="color:${above50?'var(--green)':'var(--red)'}">● Price ${above50?'above':'below'} 50-DMA ($${det.fiftyDayAvg.toFixed(2)})</span>
+        <span style="color:${above200?'var(--green)':'var(--red)'}">● Price ${above200?'above':'below'} 200-DMA ($${det.twoHundredDayAvg.toFixed(2)})</span>
+        <span style="color:${goldenCross?'var(--green)':'var(--red)'}">● ${goldenCross?'Golden Cross (bullish)':'Death Cross (bearish)'}</span>
+      </div>
+    </div>`;
+  }
+
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    <div style="font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--cyan)">${sym}</div>
+    <div style="font-size:13px;color:var(--white);font-weight:500">${esc(cfg.name)}</div>
+    <div style="font-size:11px;color:var(--muted2)">${esc(cfg.sector)}</div>
+    <div style="font-family:'Share Tech Mono';font-size:18px;font-weight:700;color:var(--white)">$${price ? price.toFixed(2) : '--'}</div>
+    ${d.change != null ? `<span style="font-size:13px;font-weight:600;color:${d.changePct >= 0 ? 'var(--green)' : 'var(--red)'}">${d.changePct >= 0 ? '+' : ''}${d.change.toFixed(2)} (${d.changePct >= 0 ? '+' : ''}${d.changePct.toFixed(2)}%)</span>` : ''}
+    <div>${badges}</div>
+  </div>
+  <div class="re-detail-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">VALUATION</div>
+      <table class="re-dt">
+        <tr><td>MARKET CAP</td><td style="color:var(--cyan)">${fmtMktCap(det.marketCap)}</td></tr>
         <tr><td>P/E (TTM)</td><td>${pf(det.trailingPE)}</td></tr>
         <tr><td>P/E (FWD)</td><td>${pf(det.forwardPE)}</td></tr>
-        <tr><td>EPS</td><td>${det.eps != null ? '$'+det.eps.toFixed(2) : '--'}</td></tr>
+        <tr><td>EPS (TTM)</td><td>${det.eps != null ? '$'+det.eps.toFixed(2) : '--'}</td></tr>
         <tr><td>P/B RATIO</td><td>${pf(det.priceToBook)}</td></tr>
         <tr><td>BOOK VALUE</td><td>${det.bookValue != null ? '$'+det.bookValue.toFixed(2) : '--'}</td></tr>
+        <tr><td>EV</td><td>${fmtMktCap(det.enterpriseValue)}</td></tr>
+      </table>
+    </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">DIVIDENDS & YIELD</div>
+      <table class="re-dt">
         <tr><td>DIV YIELD</td><td style="color:${det.dividendYield && det.dividendYield > 0.03 ? 'var(--green)' : 'var(--white)'}">${det.dividendYield != null ? (det.dividendYield*100).toFixed(2)+'%' : '--'}</td></tr>
-        <tr><td>DIV RATE</td><td>${det.dividendRate != null ? '$'+det.dividendRate.toFixed(2) : '--'}</td></tr>
+        <tr><td>DIV RATE</td><td>${det.dividendRate != null ? '$'+det.dividendRate.toFixed(2)+'/yr' : '--'}</td></tr>
+        <tr><td>PAYOUT RATIO</td><td>${det.eps && det.dividendRate ? ((det.dividendRate/Math.abs(det.eps))*100).toFixed(0)+'%' : '--'}</td></tr>
+      </table>
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin:12px 0 8px;border-bottom:1px solid var(--border);padding-bottom:4px">RISK & MOMENTUM</div>
+      <table class="re-dt">
         <tr><td>BETA</td><td style="color:${det.beta && det.beta > 1.2 ? 'var(--yellow)' : 'var(--white)'}">${pf(det.beta)}</td></tr>
-        <tr><td>DEBT/EQUITY</td><td style="color:${det.debtToEquity && det.debtToEquity > 200 ? 'var(--red)' : 'var(--white)'}">${det.debtToEquity != null ? det.debtToEquity.toFixed(0)+'%' : '--'}</td></tr>
-        <tr><td>ROE</td><td style="color:${det.returnOnEquity && det.returnOnEquity > 0.1 ? 'var(--green)' : 'var(--white)'}">${pctF(det.returnOnEquity)}</td></tr>
-        <tr><td>OP MARGIN</td><td>${pctF(det.operatingMargins)}</td></tr>
-        <tr><td>PROFIT MARGIN</td><td>${pctF(det.profitMargins)}</td></tr>
-        <tr><td>REV GROWTH</td><td style="color:${det.revenueGrowth && det.revenueGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.revenueGrowth)}</td></tr>
-        <tr><td>EPS GROWTH (Q)</td><td style="color:${det.earningsGrowth && det.earningsGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.earningsGrowth)}</td></tr>
         <tr><td>50-DAY AVG</td><td>${det.fiftyDayAvg != null ? '$'+det.fiftyDayAvg.toFixed(2) : '--'}</td></tr>
         <tr><td>200-DAY AVG</td><td>${det.twoHundredDayAvg != null ? '$'+det.twoHundredDayAvg.toFixed(2) : '--'}</td></tr>
       </table>
-      ${!det._ts ? '<div style="font-size:8px;color:var(--yellow);margin-top:6px">⟳ Loading detailed data...</div>' : ''}
     </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">PROFITABILITY</div>
+      <table class="re-dt">
+        <tr><td>REVENUE</td><td>${fmtB(det.totalRevenue)}</td></tr>
+        <tr><td>OP MARGIN</td><td>${pctF(det.operatingMargins)}</td></tr>
+        <tr><td>PROFIT MARGIN</td><td style="color:${det.profitMargins && det.profitMargins > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.profitMargins)}</td></tr>
+        <tr><td>ROE</td><td style="color:${det.returnOnEquity && det.returnOnEquity > 0.1 ? 'var(--green)' : 'var(--white)'}">${pctF(det.returnOnEquity)}</td></tr>
+        <tr><td>D/E RATIO</td><td style="color:${det.debtToEquity && det.debtToEquity > 200 ? 'var(--red)' : 'var(--white)'}">${det.debtToEquity != null ? det.debtToEquity.toFixed(0)+'%' : '--'}</td></tr>
+        <tr><td>REV GROWTH</td><td style="color:${det.revenueGrowth && det.revenueGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.revenueGrowth)}</td></tr>
+        <tr><td>EPS GROWTH (Q)</td><td style="color:${det.earningsGrowth && det.earningsGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.earningsGrowth)}</td></tr>
+      </table>
+    </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">TRADING DATA</div>
+      <table class="re-dt">
+        <tr><td>OPEN</td><td>${d.prevClose ? '$'+d.prevClose.toFixed(2) : '--'}</td></tr>
+        <tr><td>HIGH</td><td style="color:var(--green)">${d.high ? '$'+d.high.toFixed(2) : '--'}</td></tr>
+        <tr><td>LOW</td><td style="color:var(--red)">${d.low ? '$'+d.low.toFixed(2) : '--'}</td></tr>
+        <tr><td>VOLUME</td><td>${fmtVol(d.volume)}</td></tr>
+        <tr><td>SHARES OUT</td><td>${det.sharesOutstanding ? fmtB(det.sharesOutstanding).replace('$','') : '--'}</td></tr>
+      </table>
+      ${chartHtml}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
     <div class="re-detail-section">
       <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">CHARTS & TARGETS</div>
       ${w52bar}
-      ${chartHtml}
       ${analystHtml}
-      <div style="margin-top:10px">
-        <div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">SECTOR SIGNALS</div>
-        ${badges}
-      </div>
-      <div style="margin-top:10px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:3px">
-        <div style="font-size:8px;color:var(--muted2);letter-spacing:1px">QUICK STATS</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;font-size:10px">
-          <div><span style="color:var(--muted2)">Open:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.prevClose ? '$'+d.prevClose.toFixed(2) : '--'}</span></div>
-          <div><span style="color:var(--muted2)">High:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.high ? '$'+d.high.toFixed(2) : '--'}</span></div>
-          <div><span style="color:var(--muted2)">Low:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.low ? '$'+d.low.toFixed(2) : '--'}</span></div>
-          <div><span style="color:var(--muted2)">Vol:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${fmtVol(d.volume)}</span></div>
-        </div>
-      </div>
+      ${maSignals}
     </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">EARNINGS & FINANCIALS</div>
+      ${earningsHtml}
+      ${estimatesHtml}
+      ${incomeHtml}
+      ${bsHtml}
+      ${!earningsHtml && !incomeHtml && !bsHtml ? '<div style="font-size:9px;color:var(--muted2);padding:8px 0">Earnings data loading...</div>' : ''}
+    </div>
+  </div>
+  <div style="margin-top:14px">
     <div class="re-detail-section">
       <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">ABOUT & NEWS</div>
       <div style="font-size:10px;color:var(--text);line-height:1.5;margin-bottom:10px">${descText}</div>
-      ${det.industry ? `<div style="font-size:8px;color:var(--muted2);margin-bottom:4px">Industry: <span style="color:var(--white)">${esc(det.industry)}</span>${det.employees ? ' · '+det.employees.toLocaleString()+' employees' : ''}</div>` : ''}
+      ${det.industry ? `<div style="font-size:8px;color:var(--muted2);margin-bottom:4px">Industry: <span style="color:var(--white)">${esc(det.industry)}</span>${det.employees ? ' · '+det.employees.toLocaleString()+' employees' : ''} ${det.sector ? ' · Sector: '+esc(det.sector) : ''}</div>` : ''}
       <div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px;border-top:1px solid var(--border);padding-top:8px">RELATED NEWS</div>
       ${newsHtml}
     </div>
-  </div>`;
+  </div>
+  ${!det._ts ? '<div style="font-size:8px;color:var(--yellow);margin-top:8px;text-align:center">⟳ Loading detailed fundamentals... Expand again in a moment for full data.</div>' : ''}`;
 }
 
 function renderCompare() {
