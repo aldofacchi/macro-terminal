@@ -22,7 +22,9 @@ body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--tex
 body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.018) 2px,rgba(0,0,0,.018) 4px);pointer-events:none;z-index:9999;}
 
 /* ══ SETUP MODAL ══ */
-#setup-modal{position:fixed;inset:0;background:rgba(8,11,14,.97);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;}
+#setup-modal{position:fixed;inset:0;background:rgba(8,11,14,.97);z-index:10001;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;}
+#setup-modal *{pointer-events:auto;}
+#setup-modal .setup-input{-webkit-user-select:text;user-select:text;}
 #setup-modal.hidden{display:none;}
 .setup-box{background:var(--panel);border:1px solid var(--border2);border-radius:6px;padding:36px 40px;max-width:660px;width:90%;margin:auto;}
 .setup-logo{font-family:'Orbitron',sans-serif;font-size:19px;font-weight:900;color:var(--green);letter-spacing:3px;margin-bottom:4px;}
@@ -425,22 +427,22 @@ svg.sp{width:100%;height:36px;overflow:visible;}
       <div style="font-size:8px;letter-spacing:2px;color:var(--green);margin-bottom:12px">★ ALL KEYS REQUIRED — ALL FREE — TAKES 5 MINUTES</div>
 
       <div class="setup-label">FRED API KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" style="color:var(--blue)">fred.stlouisfed.org</a></span></div>
-      <input class="setup-input" id="fred-key-input" type="password" placeholder="147 series: rates, housing, inflation, employment, CRE, demographics" autocomplete="off" spellcheck="false" style="margin-bottom:8px">
+      <input class="setup-input" id="fred-key-input" type="text" placeholder="147 series: rates, housing, inflation, employment, CRE, demographics" autocomplete="off" spellcheck="false" style="margin-bottom:8px">
 
       <div class="setup-label">NEWS API KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://newsapi.org/register" target="_blank" style="color:var(--blue)">newsapi.org/register</a></span></div>
-      <input class="setup-input" id="news-key-input" type="password" placeholder="Tab 12: Live RE &amp; macro headlines — Reuters, Bloomberg, WSJ, CNBC" autocomplete="off" style="margin-bottom:8px">
+      <input class="setup-input" id="news-key-input" type="text" placeholder="Tab 12: Live RE &amp; macro headlines — Reuters, Bloomberg, WSJ, CNBC" autocomplete="off" style="margin-bottom:8px">
 
       <div class="setup-label">COLLEGE SCORECARD KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://collegescorecard.ed.gov/data/api-documentation/" target="_blank" style="color:var(--blue)">collegescorecard.ed.gov</a></span></div>
-      <input class="setup-input" id="scorecard-key-input" type="password" placeholder="Tab 13: Graduate earnings, median debt, STEM %, grad rates per university" autocomplete="off" style="margin-bottom:8px">
+      <input class="setup-input" id="scorecard-key-input" type="text" placeholder="Tab 13: Graduate earnings, median debt, STEM %, grad rates per university" autocomplete="off" style="margin-bottom:8px">
 
       <div class="setup-label">FINNHUB KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://finnhub.io/register" target="_blank" style="color:var(--blue)">finnhub.io/register</a></span></div>
-      <input class="setup-input" id="finnhub-key-input" type="password" placeholder="Tab RT: Exact FOMC, CPI, NFP release dates with consensus estimates" autocomplete="off" style="margin-bottom:8px">
+      <input class="setup-input" id="finnhub-key-input" type="text" placeholder="Tab RT: Exact FOMC, CPI, NFP release dates with consensus estimates" autocomplete="off" style="margin-bottom:8px">
 
       <div class="setup-label">BLS API KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://data.bls.gov/registrationEngine/" target="_blank" style="color:var(--blue)">data.bls.gov</a></span></div>
-      <input class="setup-input" id="bls-key-input" type="password" placeholder="Same-day BLS data on release days — payrolls, CPI, unemployment" autocomplete="off" style="margin-bottom:8px">
+      <input class="setup-input" id="bls-key-input" type="text" placeholder="Same-day BLS data on release days — payrolls, CPI, unemployment" autocomplete="off" style="margin-bottom:8px">
 
       <div class="setup-label">CENSUS API KEY <span style="color:var(--muted2);font-weight:400;font-size:8px">— <a href="https://api.census.gov/data/key_signup.html" target="_blank" style="color:var(--blue)">api.census.gov</a></span></div>
-      <input class="setup-input" id="census-key-input" type="password" placeholder="Tab 14: MSA demographics, renter %, 18-24 population by market" autocomplete="off">
+      <input class="setup-input" id="census-key-input" type="text" placeholder="Tab 14: MSA demographics, renter %, 18-24 population by market" autocomplete="off">
     </div>
 
     <!-- ── THEME SELECTOR ── -->
