@@ -2306,9 +2306,11 @@ async function fetchFinnhubQuotes() {
         if (!resp.ok) return false;
         const j = await resp.json();
         if (!j.c || j.c === 0) return false; // No price data
-        // Don't overwrite fresh WS data (WS takes priority)
+        // Don't overwrite fresh WS or Yahoo data (Yahoo/WS use real indices, Finnhub REST uses ETF proxies with different scales)
         if (RT[rtKey]?._source === 'ws' && RT[rtKey]?.timestamp &&
             (Date.now() - RT[rtKey].timestamp) < 30000) return true; // WS is fresh, skip
+        if (RT[rtKey]?._source === 'yahoo' && RT[rtKey]?.timestamp &&
+            (Date.now() - RT[rtKey].timestamp) < 300000) return true; // Yahoo is <5min old, skip
         RT[rtKey] = {
           price:     j.c,
           change:    j.d || 0,
