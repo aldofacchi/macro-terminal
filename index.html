@@ -94,30 +94,46 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .tab.active .tn{color:var(--green2);}
 .tnew{font-size:8px;background:rgba(176,106,255,.15);color:var(--purple);border:1px solid rgba(176,106,255,.3);padding:1px 4px;border-radius:2px;}
 
-/* ══ RE STOCKS EXPANDABLE ══ */
-.re-stock-row{cursor:pointer;transition:background .15s;}
-.re-stock-row:hover{background:rgba(0,150,255,.04);}
-.re-stock-row.expanded{background:rgba(0,229,255,.04);border-bottom:none;}
-.re-stock-detail{display:none;background:var(--bg3);}
-.re-stock-detail.open{display:table-row;}
-.re-stock-detail td{padding:14px 16px;}
+/* ══ RE STOCKS — CLEAN TERMINAL STYLE ══ */
+.re-ticker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}
+.re-ticker-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.re-ticker-card:hover{border-color:var(--cyan);background:rgba(0,229,255,.03);}
+.re-ticker-card.active{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.08);}
+.re-ticker-card .re-sym{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);margin-bottom:2px;}
+.re-ticker-card .re-name{font-size:8px;color:var(--muted2);letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px;}
+.re-ticker-card .re-price{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;color:var(--white);line-height:1;}
+.re-ticker-card .re-chg{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:600;margin-top:4px;}
+.re-ticker-card .re-from52{font-size:8px;color:var(--muted);margin-top:2px;}
+.re-ticker-card .re-spark{position:absolute;bottom:0;right:0;opacity:.25;}
+.re-sector-label{font-size:9px;letter-spacing:2px;color:var(--muted2);padding:16px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.re-sector-label .re-sec-perf{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:600;}
+.re-detail-panel{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:20px;margin-top:12px;animation:fadeSlide .2s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .re-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
 @media(max-width:1200px){.re-detail-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:700px){.re-detail-grid{grid-template-columns:1fr;}}
-.re-expand-arrow{font-size:9px;margin-right:4px;transition:transform .2s;display:inline-block;color:var(--muted2);}
-.re-stock-row.expanded .re-expand-arrow{transform:rotate(90deg);color:var(--cyan);}
-.re-detail-section{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px 12px;}
+.re-detail-section{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:12px 14px;}
 .re-detail-section .re-dt{width:100%;font-size:10px;border-collapse:collapse;}
-.re-detail-section .re-dt td{padding:3px 0;border-bottom:1px solid var(--border);}
-.re-detail-section .re-dt td:first-child{color:var(--muted2);letter-spacing:.5px;}
+.re-detail-section .re-dt td{padding:4px 0;border-bottom:1px solid rgba(26,35,56,.4);}
+.re-detail-section .re-dt td:first-child{color:var(--muted2);letter-spacing:.5px;font-size:9px;}
 .re-detail-section .re-dt td:last-child{text-align:right;font-family:'Share Tech Mono',monospace;color:var(--white);}
+.re-detail-section .re-dt tr:last-child td{border-bottom:none;}
 .re-52w-bar{height:6px;background:var(--bg2);border-radius:3px;position:relative;margin:6px 0;}
 .re-52w-marker{position:absolute;top:-2px;width:2px;height:10px;background:var(--cyan);border-radius:1px;}
-.re-news-item{padding:5px 0;border-bottom:1px solid var(--border);}
+.re-news-item{padding:6px 0;border-bottom:1px solid rgba(26,35,56,.4);}
 .re-news-item:last-child{border-bottom:none;}
 .re-news-item a{font-size:10px;color:var(--white);text-decoration:none;line-height:1.4;}
 .re-news-item a:hover{color:var(--cyan);}
-.re-kpi-badge{display:inline-block;font-size:8px;padding:2px 6px;border-radius:2px;letter-spacing:.5px;margin:2px 2px 2px 0;}
+.re-kpi-badge{display:inline-block;font-size:7px;padding:2px 6px;border-radius:2px;letter-spacing:.5px;margin:2px 2px 2px 0;}
+.re-heatmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:16px;}
+.re-heat-cell{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:10px 12px;text-align:center;transition:all .15s;}
+.re-heat-cell:hover{border-color:var(--cyan);}
+.re-heat-cell .re-heat-name{font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px;}
+.re-heat-cell .re-heat-val{font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;}
+.re-summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px;}
+.re-summary-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:14px 16px;}
+.re-summary-card .re-sum-label{font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:6px;}
+.re-summary-card .re-sum-val{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;color:var(--white);}
 
 /* ══ MAIN ══ */
 .main{padding:12px;max-width:1800px;margin:0 auto;}
@@ -3244,86 +3260,154 @@ function renderREStocks() {
     sectorPerf[sec] = { avg: withData.reduce((s,x) => s + (x.data.changePct||0), 0) / withData.length, count: withData.length };
   });
 
-  function fmtMktCap(v) { if (!v) return '--'; if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T'; if (v >= 1e9) return '$'+(v/1e9).toFixed(2)+'B'; if (v >= 1e6) return '$'+(v/1e6).toFixed(0)+'M'; return '$'+v.toLocaleString(); }
-  function fmtVol(v) { if (!v) return '--'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(0)+'K'; return v; }
-  function pctFmt(v) { if (v == null) return '--'; return (v*100).toFixed(1)+'%'; }
+  // Compute market-wide stats
+  const avgChg = allWithData.length ? allWithData.reduce((s,x) => s + (x.d.changePct||0), 0) / allWithData.length : 0;
+  const advancers = allWithData.filter(s => s.d.changePct > 0).length;
+  const decliners = allWithData.filter(s => s.d.changePct < 0).length;
 
-  function stockRow(s) {
+  function fmtVol(v) { if (!v) return '--'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(0)+'K'; return v; }
+
+  // Ticker card builder
+  function tickerCard(s) {
     const d = s.data;
-    const isExpanded = RE_STOCKS_EXPANDED.has(s.sym);
-    const arrow = `<span class="re-expand-arrow">${isExpanded ? '▾' : '▸'}</span>`;
-    if (!d) return `<tr class="re-stock-row" data-sym="${s.sym}" onclick="toggleREStockDetail('${s.sym}')"><td style="font-weight:600">${arrow}${s.sym}</td><td>${esc(s.name)}</td><td colspan="5" style="text-align:center;font-size:9px;color:var(--muted)">Loading...</td></tr>
-    <tr class="re-stock-detail" id="re-detail-${s.sym}"><td colspan="7"></td></tr>`;
+    if (!d) return `<div class="re-ticker-card" onclick="selectREStock('${s.sym}')">
+      <div class="re-sym">${s.sym}</div><div class="re-name">${esc(s.name)}</div>
+      <div class="re-price" style="color:var(--muted)">--</div>
+    </div>`;
     const isPos = d.changePct >= 0;
     const chgColor = isPos ? 'var(--green)' : 'var(--red)';
-    const vol = fmtVol(d.volume);
-    const miniSpark = d.chartData && d.chartData.length >= 2 ? spark(d.chartData, chgColor, 22) : '';
     const w52h = d.fiftyTwoWeekHigh, w52l = d.fiftyTwoWeekLow;
-    const w52range = w52h && w52l ? `<span style="font-size:8px;color:var(--muted2)">${w52l.toFixed(0)}-${w52h.toFixed(0)}</span>` : '';
-    return `<tr class="re-stock-row ${isExpanded?'expanded':''}" data-sym="${s.sym}" onclick="toggleREStockDetail('${s.sym}')">
-      <td style="font-weight:600;color:var(--cyan)">${arrow}${s.sym}</td>
-      <td style="color:var(--white);font-size:10px">${esc(s.name)}</td>
-      <td class="tdr" style="font-weight:600;color:var(--white);font-family:'Share Tech Mono'">${d.price.toFixed(2)}</td>
-      <td class="tdr" style="color:${chgColor};font-family:'Share Tech Mono'">${isPos?'+':''}${d.change.toFixed(2)}</td>
-      <td class="tdr" style="color:${chgColor};font-weight:600">${isPos?'+':''}${d.changePct.toFixed(2)}%</td>
-      <td class="tdr" style="color:var(--muted2)">${vol}</td>
-      <td class="tdr">${miniSpark} ${w52range}</td>
-    </tr>
-    <tr class="re-stock-detail ${isExpanded?'open':''}" id="re-detail-${s.sym}"><td colspan="7">${isExpanded ? buildREDetailPanel(s.sym) : ''}</td></tr>`;
+    const from52 = w52h && d.price ? ((d.price - w52h) / w52h * 100).toFixed(1) : null;
+    const miniSpark = d.chartData && d.chartData.length >= 2 ? spark(d.chartData, chgColor, 30) : '';
+    const isActive = RE_STOCKS_EXPANDED.has(s.sym);
+    return `<div class="re-ticker-card${isActive ? ' active' : ''}" onclick="selectREStock('${s.sym}')">
+      <div class="re-sym">${s.sym}</div>
+      <div class="re-name">${esc(s.name)}</div>
+      <div class="re-price">$${d.price.toFixed(2)}</div>
+      <div class="re-chg" style="color:${chgColor}">${isPos ? '+' : ''}${d.changePct.toFixed(2)}%</div>
+      ${from52 != null ? `<div class="re-from52">${from52}% from 52WH</div>` : ''}
+      ${miniSpark ? `<div class="re-spark">${miniSpark}</div>` : ''}
+    </div>`;
   }
 
+  // Top movers cards (horizontal)
+  function moverCard(s, rank) {
+    const isPos = s.d.changePct >= 0;
+    const c = isPos ? 'var(--green)' : 'var(--red)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${rank > 0 ? 'border-top:1px solid rgba(26,35,56,.4)' : ''}">
+      <span style="font-size:8px;color:var(--muted);min-width:14px">${rank+1}.</span>
+      <span style="font-family:'Orbitron';font-size:10px;font-weight:700;color:var(--cyan);min-width:50px;cursor:pointer" onclick="selectREStock('${s.sym}')">${s.sym}</span>
+      <span style="font-size:9px;color:var(--muted2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</span>
+      <span style="font-family:'Share Tech Mono';font-size:12px;color:var(--white);min-width:60px;text-align:right">$${s.d.price.toFixed(2)}</span>
+      <span style="font-family:'Share Tech Mono';font-size:11px;font-weight:600;color:${c};min-width:65px;text-align:right">${isPos?'+':''}${s.d.changePct.toFixed(2)}%</span>
+    </div>`;
+  }
+
+  // Sector sections with ticker cards
   const sectionsHtml = sectorOrder.filter(s => sectors[s]).map(sec => {
     const stocks = sectors[sec];
     const perf = sectorPerf[sec];
     const perfColor = perf ? (perf.avg >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted2)';
-    return `<div class="card mb">
-      <div class="ct"><div class="ct-left"><span class="cdot" style="background:${perfColor}"></span>${sec.toUpperCase()}</div>
-        ${perf ? `<span style="font-size:9px;color:${perfColor};font-weight:600">${perf.avg >= 0 ? '+' : ''}${perf.avg.toFixed(2)}% avg</span>` : ''}
+    return `<div>
+      <div class="re-sector-label">
+        <span>${sec.toUpperCase()}</span>
+        ${perf ? `<span class="re-sec-perf" style="color:${perfColor}">${perf.avg >= 0 ? '+' : ''}${perf.avg.toFixed(2)}%</span>` : ''}
       </div>
-      <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">CHG</th><th class="tdr">%CHG</th><th class="tdr">VOL</th><th class="tdr">CHART / 52W</th></tr></thead>
-      <tbody>${stocks.map(stockRow).join('')}</tbody></table>
+      <div class="re-ticker-grid">${stocks.map(tickerCard).join('')}</div>
     </div>`;
   }).join('');
 
+  // Active detail panel
+  const activeSyms = [...RE_STOCKS_EXPANDED];
+  const detailHtml = activeSyms.length ? activeSyms.map(sym =>
+    `<div class="re-detail-panel" id="re-detail-${sym}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:8px;color:var(--muted2);letter-spacing:2px">DETAILED VIEW</div>
+        <span style="cursor:pointer;font-size:14px;color:var(--muted2);padding:2px 8px" onclick="RE_STOCKS_EXPANDED.delete('${sym}');renderREStocks()">✕</span>
+      </div>
+      ${buildREDetailPanel(sym)}
+    </div>`
+  ).join('') : '';
+
   el.innerHTML = `
-    ${sh('REAL ESTATE SECTOR STOCKS','LIVE YAHOO FINANCE · CLICK ANY TICKER TO EXPAND · ' + statusText)}
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
-      <span style="font-size:10px;color:${statusColor};font-weight:600">${statusText}</span>
-      <span style="font-size:9px;color:var(--muted2)">${loadedCount}/${totalCount} symbols loaded</span>
-      <span style="font-size:9px;color:var(--muted2)">${RE_STOCKS_LOADED ? 'Last update: ' + new Date().toLocaleTimeString() : 'Fetching...'}</span>
-      <button class="rbtn" onclick="RE_STOCKS_LOADED=false;RE_STOCK_DATA={};RE_STOCKS_EXPANDED.clear();fetchREStocks().then(()=>renderREStocks())">⟳ REFRESH</button>
-    </div>
-    <div class="g2 mb">
-      <div class="card">
-        <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>TOP GAINERS</div></div>
-        <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
-        <tbody>${topGainers.map(s => `<tr style="cursor:pointer" onclick="toggleREStockDetail('${s.sym}');document.getElementById('re-detail-${s.sym}')?.scrollIntoView({behavior:'smooth',block:'center'})"><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--green);font-weight:600">+${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-family:'Orbitron';font-size:14px;font-weight:700;letter-spacing:3px;color:var(--white)">REAL ESTATE STOCKS</div>
+        <div style="font-size:9px;color:var(--muted2);margin-top:4px;letter-spacing:1px">LIVE YAHOO FINANCE · ${loadedCount}/${totalCount} SYMBOLS · ${RE_STOCKS_LOADED ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'FETCHING...'}</div>
       </div>
-      <div class="card">
-        <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--red)"></span>TOP LOSERS</div></div>
-        <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
-        <tbody>${topLosers.map(s => `<tr style="cursor:pointer" onclick="toggleREStockDetail('${s.sym}');document.getElementById('re-detail-${s.sym}')?.scrollIntoView({behavior:'smooth',block:'center'})"><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--red);font-weight:600">${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:10px;color:${statusColor};font-weight:600">${statusText}</span>
+        <button class="rbtn" onclick="RE_STOCKS_LOADED=false;RE_STOCK_DATA={};RE_STOCKS_EXPANDED.clear();fetchREStocks().then(()=>renderREStocks())">⟳ REFRESH</button>
       </div>
     </div>
-    <div class="card mb">
-      <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--blue)"></span>SECTOR PERFORMANCE HEATMAP</div></div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-        ${Object.entries(sectorPerf).sort((a,b) => b[1].avg - a[1].avg).map(([sec, p]) => {
-          const bg = p.avg >= 1 ? 'rgba(0,255,157,.15)' : p.avg >= 0 ? 'rgba(0,255,157,.07)' : p.avg >= -1 ? 'rgba(255,61,90,.07)' : 'rgba(255,61,90,.15)';
-          const c = p.avg >= 0 ? 'var(--green)' : 'var(--red)';
-          return `<div style="background:${bg};border:1px solid ${c}30;border-radius:3px;padding:6px 10px;min-width:120px;flex:1">
-            <div style="font-size:8px;color:var(--muted2);letter-spacing:1px">${sec}</div>
-            <div style="font-size:14px;font-weight:700;color:${c};font-family:'Share Tech Mono'">${p.avg >= 0 ? '+' : ''}${p.avg.toFixed(2)}%</div>
-          </div>`;
-        }).join('')}
+
+    <div class="re-summary-row">
+      <div class="re-summary-card">
+        <div class="re-sum-label">RE SECTOR AVG</div>
+        <div class="re-sum-val" style="color:${avgChg >= 0 ? 'var(--green)' : 'var(--red)'}">${avgChg >= 0 ? '+' : ''}${avgChg.toFixed(2)}%</div>
+      </div>
+      <div class="re-summary-card">
+        <div class="re-sum-label">ADVANCERS / DECLINERS</div>
+        <div class="re-sum-val"><span style="color:var(--green)">${advancers}</span><span style="color:var(--muted2);font-size:14px"> / </span><span style="color:var(--red)">${decliners}</span></div>
+      </div>
+      <div class="re-summary-card">
+        <div class="re-sum-label">TOP GAINER</div>
+        <div class="re-sum-val" style="font-size:16px">${topGainers[0] ? `<span style="color:var(--cyan);cursor:pointer" onclick="selectREStock('${topGainers[0].sym}')">${topGainers[0].sym}</span> <span style="color:var(--green)">+${topGainers[0].d.changePct.toFixed(2)}%</span>` : '--'}</div>
+      </div>
+      <div class="re-summary-card">
+        <div class="re-sum-label">TOP LOSER</div>
+        <div class="re-sum-val" style="font-size:16px">${topLosers[0] ? `<span style="color:var(--cyan);cursor:pointer" onclick="selectREStock('${topLosers[0].sym}')">${topLosers[0].sym}</span> <span style="color:var(--red)">${topLosers[0].d.changePct.toFixed(2)}%</span>` : '--'}</div>
       </div>
     </div>
+
+    <div class="re-heatmap">
+      ${Object.entries(sectorPerf).sort((a,b) => b[1].avg - a[1].avg).map(([sec, p]) => {
+        const c = p.avg >= 0 ? 'var(--green)' : 'var(--red)';
+        const intensity = Math.min(1, Math.abs(p.avg) / 2);
+        const bg = p.avg >= 0 ? `rgba(0,255,157,${(0.04 + intensity * 0.12).toFixed(2)})` : `rgba(255,61,90,${(0.04 + intensity * 0.12).toFixed(2)})`;
+        return `<div class="re-heat-cell" style="background:${bg};border-color:${c}25">
+          <div class="re-heat-name">${sec}</div>
+          <div class="re-heat-val" style="color:${c}">${p.avg >= 0 ? '+' : ''}${p.avg.toFixed(2)}%</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--green);margin-bottom:10px">▲ TOP GAINERS</div>
+        ${topGainers.map((s,i) => moverCard(s,i)).join('')}
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--red);margin-bottom:10px">▼ TOP LOSERS</div>
+        ${topLosers.map((s,i) => moverCard(s,i)).join('')}
+      </div>
+    </div>
+
+    ${detailHtml}
+
     ${sectionsHtml}
-    <div class="comm" style="border-left-color:var(--blue)">
-      <div class="ct2">▸ REAL ESTATE SECTOR INTELLIGENCE</div>
-      <p>Tracking <strong>${totalCount} real estate securities</strong> — click any ticker for detailed fundamentals, ratios, analyst targets, and related news. Data from Yahoo Finance via CORS proxy.</p>
-      <p style="margin-top:4px">Key signals: Apartment REIT performance leads rent growth expectations. Homebuilder stocks lead housing starts. Mortgage REITs reflect rate sensitivity. Office REITs signal CRE distress levels.</p>
-    </div>`;
+  `;
+}
+
+function selectREStock(sym) {
+  if (RE_STOCKS_EXPANDED.has(sym)) {
+    RE_STOCKS_EXPANDED.delete(sym);
+  } else {
+    RE_STOCKS_EXPANDED.clear();
+    RE_STOCKS_EXPANDED.add(sym);
+  }
+  renderREStocks();
+  // Lazy-load detail if needed
+  if (RE_STOCKS_EXPANDED.has(sym)) {
+    const d = RE_STOCK_DATA[sym];
+    if (!d?.detail || (Date.now() - (d.detail._ts||0) > 1800000)) {
+      fetchREStockDetail(sym).then(() => renderREStocks());
+    }
+    setTimeout(() => {
+      const panel = document.getElementById('re-detail-' + sym);
+      if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 50);
+  }
 }
 
 // ── RE Stock Detail Panel Builder & Toggle ──
