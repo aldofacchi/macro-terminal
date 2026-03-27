@@ -82,7 +82,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .fetch-progress{height:2px;background:transparent;}
 .fetch-progress-bar{height:100%;width:0;background:var(--cyan);transition:width .3s ease;box-shadow:0 0 6px var(--cyan);}
 .tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;gap:1px;overflow-x:auto;scrollbar-width:none;}
-.sticky-header-wrap{position:sticky;top:0;z-index:300;}
+.sticky-header-wrap{position:sticky;top:0;z-index:300;background:var(--bg2);}
 .tabs-wrap::-webkit-scrollbar{display:none;}
 .tabs-wrap::after{content:'';position:sticky;right:0;top:0;min-width:40px;height:100%;background:linear-gradient(90deg,transparent,var(--bg2));pointer-events:none;flex-shrink:0;}
 .tab{padding:8px 14px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;user-select:none;display:flex;align-items:center;gap:4px;}
@@ -137,6 +137,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .sw{margin-top:7px;height:36px;}
 svg.sp{width:100%;height:36px;overflow:visible;}
 .bigchart{display:block;max-width:100%;}
+.chart-expand-btn{font-size:12px;color:var(--muted2);cursor:pointer;padding:1px 4px;border-radius:2px;transition:all .15s;line-height:1;}
+.chart-expand-btn:hover{color:var(--cyan);background:rgba(0,229,255,.08);}
 
 /* ══ SH ══ */
 .sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:6px;}
@@ -461,9 +463,6 @@ svg.sp{width:100%;height:36px;overflow:visible;}
     <input id="kpi-search" type="text" placeholder="Search KPIs..." style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:4px 10px;border-radius:3px;font-family:var(--mono);font-size:10px;width:140px;letter-spacing:1px" oninput="filterCards(this.value)">
     <span id="search-count" style="font-size:8px;color:var(--muted2);margin-left:4px;letter-spacing:1px"></span>
     <button class="rbtn" onclick="manualRefresh()">⟳ REFRESH</button>
-    <button class="settings-btn" onclick="(function(){var tab=document.querySelector('.tab.active'),id=tab?tab.dataset.tab:'',names={regime:'REGIME',overview:'OVERVIEW',rates:'RATES & CREDIT',liquidity:'LIQUIDITY',growth:'GROWTH & PMI',inflation:'INFLATION',housing:'HOUSING',student:'STUDENT HOUSING',markets:'MARKETS',scenarios:'SCENARIOS',underwrite:'UNDERWRITING',signals:'SIGNALS',realtime:'LIVE PRICES',news:'NEWS FEED',universities:'UNIVERSITIES',markets2:'MSA MARKETS',compare:'COMPARE'};document.getElementById('print-subtitle').textContent=(names[id]||id.toUpperCase())+' — '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});window.print()})()">📥 EXPORT</button>
-    <button class="settings-btn" onclick="exportAllTabs()" title="Export all tabs as one PDF">📋 ALL</button>
-    <button class="settings-btn" onclick="toggleDarkLight()" title="Toggle dark/light mode">☀</button>
     <button class="settings-btn" onclick="toggleDH()">⊞ DATA</button>
     <button class="settings-btn" onclick="showThemePicker()">◑ THEME</button>
     <button class="settings-btn" onclick="showSettings()">⚙ KEYS</button>
@@ -514,7 +513,8 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div class="tab" data-tab="news"><span class="tn">12</span>NEWS FEED<span class="tnew">LIVE</span></div>
   <div class="tab" data-tab="universities"><span class="tn">13</span>UNIVERSITIES<span class="tnew">LIVE</span></div>
   <div class="tab" data-tab="markets2"><span class="tn">14</span>MSA MARKETS<span class="tnew">LIVE</span></div>
-  <div class="tab" data-tab="compare"><span class="tn">15</span>COMPARE</div>
+  <div class="tab" data-tab="restocks"><span class="tn">16</span>RE STOCKS<span class="tnew">LIVE</span></div>
+  <div class="tab" data-tab="compare"><span class="tn">17</span>COMPARE</div>
 </div>
 
 </div><!-- /sticky-header-wrap -->
@@ -542,6 +542,7 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div class="panel" id="tab-news"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-universities"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-markets2"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
+  <div class="panel" id="tab-restocks"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-compare"></div>
 </div>
 
@@ -921,22 +922,6 @@ function loadSavedTheme() {
   applyTheme(saved);
 }
 
-function toggleDarkLight() {
-  const current = localStorage.getItem('shmacro_theme') || 'obsidian';
-  const lightThemes = ['paper_white','arctic','titanium'];
-  const isLight = lightThemes.includes(current);
-  if (isLight) {
-    const saved = localStorage.getItem('shmacro_dark_theme') || 'obsidian';
-    applyTheme(saved);
-  } else {
-    try { localStorage.setItem('shmacro_dark_theme', current); } catch(_) {}
-    const lt = Object.keys(THEMES).find(k => {
-      const bg = THEMES[k]?.vars?.['--bg'] || '#000';
-      return parseInt(bg.replace('#',''), 16) > 0x888888;
-    });
-    applyTheme(lt || 'paper_white');
-  }
-}
 
 function buildThemePicker() {
   return Object.entries(THEMES).map(([key, t]) => {
@@ -1849,6 +1834,163 @@ const FINNHUB_QUOTE_SYMBOLS = {
   UUP:  'DXY_RT',     // Dollar Index proxy
   VIXY: 'VIX_RT',     // VIX proxy
 };
+
+// ══ REAL ESTATE STOCKS — Yahoo Finance symbols ══
+const RE_STOCKS = {
+  // ── REITs: Residential / Apartment ──
+  'EQR':   { sym:'EQR',   name:'Equity Residential',    sector:'Apartment REIT',    desc:'Largest pure-play apartment REIT. 80K+ units in coastal gateway markets.' },
+  'AVB':   { sym:'AVB',   name:'AvalonBay Communities',  sector:'Apartment REIT',    desc:'Premium apartment REIT focused on high-barrier coastal markets.' },
+  'MAA':   { sym:'MAA',   name:'Mid-America Apartment',  sector:'Apartment REIT',    desc:'Sun Belt apartment REIT. Strong NOI growth markets.' },
+  'UDR':   { sym:'UDR',   name:'UDR Inc',                sector:'Apartment REIT',    desc:'Diversified apartment REIT across 13 markets.' },
+  'ESS':   { sym:'ESS',   name:'Essex Property Trust',   sector:'Apartment REIT',    desc:'West Coast apartment REIT — CA & WA focused.' },
+  'CPT':   { sym:'CPT',   name:'Camden Property Trust',  sector:'Apartment REIT',    desc:'Sun Belt multifamily. High-growth markets.' },
+  'NXRT':  { sym:'NXRT',  name:'NexPoint Residential',   sector:'Apartment REIT',    desc:'Value-add apartment strategy, Sun Belt markets.' },
+  'IRT':   { sym:'IRT',   name:'Independence Realty',    sector:'Apartment REIT',    desc:'Non-gateway multifamily REIT.' },
+  // ── REITs: Student Housing ──
+  'ACC':   { sym:'ACC',   name:'American Campus (ref)',   sector:'Student Housing',   desc:'Was largest student housing REIT (acquired by Blackstone 2022). Reference ticker.' },
+  // ── REITs: Diversified / Office / CRE ──
+  'VNO':   { sym:'VNO',   name:'Vornado Realty',         sector:'Office REIT',       desc:'NYC office REIT. Indicator of CRE stress.' },
+  'SLG':   { sym:'SLG',   name:'SL Green Realty',        sector:'Office REIT',       desc:'Manhattan office REIT. CRE sentiment proxy.' },
+  'BXP':   { sym:'BXP',   name:'BXP Inc (Boston Props)',  sector:'Office REIT',       desc:'Premier office REIT — gateway cities.' },
+  'SPG':   { sym:'SPG',   name:'Simon Property Group',   sector:'Retail REIT',       desc:'Largest US mall REIT. Consumer health barometer.' },
+  'O':     { sym:'O',     name:'Realty Income',          sector:'Net Lease REIT',    desc:'Monthly dividend REIT. Rate-sensitive bellwether.' },
+  'WPC':   { sym:'WPC',   name:'W.P. Carey',             sector:'Net Lease REIT',    desc:'Diversified net lease REIT with industrial focus.' },
+  'PSA':   { sym:'PSA',   name:'Public Storage',         sector:'Storage REIT',      desc:'Largest self-storage REIT. Leading indicator of housing mobility.' },
+  'PLD':   { sym:'PLD',   name:'Prologis',               sector:'Industrial REIT',   desc:'Largest industrial/logistics REIT globally.' },
+  'AMT':   { sym:'AMT',   name:'American Tower',         sector:'Tower REIT',        desc:'Largest tower REIT. Digital infrastructure bellwether.' },
+  // ── Homebuilders ──
+  'LEN':   { sym:'LEN',   name:'Lennar',                 sector:'Homebuilder',       desc:'#2 US homebuilder. New home supply indicator.' },
+  'DHI':   { sym:'DHI',   name:'D.R. Horton',            sector:'Homebuilder',       desc:'Largest US homebuilder. Housing demand bellwether.' },
+  'PHM':   { sym:'PHM',   name:'PulteGroup',             sector:'Homebuilder',       desc:'Major homebuilder focused on move-up & active adult.' },
+  'TOL':   { sym:'TOL',   name:'Toll Brothers',          sector:'Homebuilder',       desc:'Luxury homebuilder. High-end demand indicator.' },
+  'KBH':   { sym:'KBH',   name:'KB Home',                sector:'Homebuilder',       desc:'Entry-level homebuilder. First-time buyer demand proxy.' },
+  'MTH':   { sym:'MTH',   name:'Meritage Homes',         sector:'Homebuilder',       desc:'Energy-efficient entry-level builder, Sun Belt.' },
+  // ── RE Lenders / Mortgage ──
+  'STWD':  { sym:'STWD',  name:'Starwood Property Trust', sector:'Mortgage REIT',    desc:'Largest commercial mortgage REIT. CRE lending bellwether.' },
+  'BXMT':  { sym:'BXMT',  name:'Blackstone Mortgage',    sector:'Mortgage REIT',     desc:'Blackstone\'s CRE lending arm. Floating-rate CRE loans.' },
+  'NLY':   { sym:'NLY',   name:'Annaly Capital',         sector:'Mortgage REIT',     desc:'Largest agency mortgage REIT. Rate sensitivity proxy.' },
+  'AGNC':  { sym:'AGNC',  name:'AGNC Investment',        sector:'Mortgage REIT',     desc:'Agency MBS REIT. Book value = rate vol indicator.' },
+  'RWT':   { sym:'RWT',   name:'Redwood Trust',          sector:'Mortgage REIT',     desc:'Non-agency residential & CRE credit.' },
+  // ── RE Services / Brokers ──
+  'CBRE':  { sym:'CBRE',  name:'CBRE Group',             sector:'RE Services',       desc:'Largest CRE brokerage. Transaction volume proxy.' },
+  'JLL':   { sym:'JLL',   name:'Jones Lang LaSalle',     sector:'RE Services',       desc:'#2 CRE services firm globally.' },
+  'CWK':   { sym:'CWK',   name:'Cushman & Wakefield',    sector:'RE Services',       desc:'Major CRE brokerage and advisory.' },
+  'Z':     { sym:'Z',     name:'Zillow Group',           sector:'RE Tech',           desc:'Largest RE marketplace. Housing market sentiment.' },
+  'RDFN':  { sym:'RDFN',  name:'Redfin',                 sector:'RE Tech',           desc:'Tech-powered brokerage. Housing demand indicator.' },
+  // ── ETFs ──
+  'VNQ':   { sym:'VNQ',   name:'Vanguard Real Estate ETF', sector:'REIT ETF',       desc:'Largest US REIT ETF. Broad sector benchmark.' },
+  'IYR':   { sym:'IYR',   name:'iShares US Real Estate',  sector:'REIT ETF',        desc:'Broad US REIT index ETF.' },
+  'XLRE':  { sym:'XLRE',  name:'Real Estate Select SPDR', sector:'REIT ETF',        desc:'S&P 500 Real Estate sector ETF.' },
+  'XHB':   { sym:'XHB',   name:'SPDR Homebuilders ETF',   sector:'Builder ETF',     desc:'Homebuilder & building products ETF.' },
+  'REM':   { sym:'REM',   name:'iShares Mortgage REIT',   sector:'mREIT ETF',       desc:'Mortgage REIT ETF. Rate sensitivity barometer.' },
+};
+
+let RE_STOCK_DATA = {}; // {sym: {price, change, changePct, prevClose, high, low, volume, marketCap, pe, eps, divYield, ...}}
+let RE_STOCKS_LOADED = false;
+let RE_STOCKS_LOADING = false;
+
+async function fetchREStocks() {
+  if (RE_STOCKS_LOADING) return;
+  RE_STOCKS_LOADING = true;
+  const symbols = Object.keys(RE_STOCKS);
+  const BATCH = 6;
+  for (let i = 0; i < symbols.length; i += BATCH) {
+    const batch = symbols.slice(i, i + BATCH);
+    await Promise.all(batch.map(async (sym) => {
+      const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+        + encodeURIComponent(sym) + '?interval=1d&range=5d&includePrePost=false';
+      const proxies = [
+        'https://corsproxy.io/?' + encodeURIComponent(chartUrl),
+        'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl),
+        'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(chartUrl),
+      ];
+      for (const proxy of proxies) {
+        try {
+          const resp = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+          if (!resp.ok) continue;
+          const text = await resp.text();
+          if (text.trim().startsWith('<')) continue;
+          const wrapper = JSON.parse(text);
+          const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
+          if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+          const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
+          const meta = j?.chart?.result?.[0]?.meta;
+          if (!meta?.regularMarketPrice) continue;
+          const price = meta.regularMarketPrice;
+          const prevClose = meta.previousClose || meta.chartPreviousClose || price;
+          const change = price - prevClose;
+          RE_STOCK_DATA[sym] = {
+            price: parseFloat(price.toFixed(2)),
+            change: parseFloat(change.toFixed(2)),
+            changePct: parseFloat((change / prevClose * 100).toFixed(2)),
+            prevClose: parseFloat(prevClose.toFixed(2)),
+            high: meta.regularMarketDayHigh || price,
+            low: meta.regularMarketDayLow || price,
+            volume: meta.regularMarketVolume || 0,
+            timestamp: Date.now(),
+          };
+          break;
+        } catch(e) { continue; }
+      }
+    }));
+  }
+  RE_STOCKS_LOADED = true;
+  RE_STOCKS_LOADING = false;
+  console.log('RE Stocks loaded:', Object.keys(RE_STOCK_DATA).length, 'symbols');
+}
+
+// ══ FOREX SYMBOLS for Rates tab ══
+const FOREX_SYMBOLS = {
+  'EURUSD': { sym:'EURUSD=X', name:'EUR/USD', desc:'Euro vs Dollar' },
+  'GBPUSD': { sym:'GBPUSD=X', name:'GBP/USD', desc:'British Pound vs Dollar' },
+  'USDJPY': { sym:'JPY=X',    name:'USD/JPY', desc:'Dollar vs Japanese Yen' },
+  'USDCNY': { sym:'CNY=X',    name:'USD/CNY', desc:'Dollar vs Chinese Yuan' },
+  'USDCHF': { sym:'CHF=X',    name:'USD/CHF', desc:'Dollar vs Swiss Franc' },
+  'AUDUSD': { sym:'AUDUSD=X', name:'AUD/USD', desc:'Aussie Dollar vs Dollar' },
+  'USDCAD': { sym:'CAD=X',    name:'USD/CAD', desc:'Dollar vs Canadian Dollar' },
+  'USDBRL': { sym:'BRL=X',    name:'USD/BRL', desc:'Dollar vs Brazilian Real' },
+};
+let FOREX_DATA = {};
+let FOREX_LOADED = false;
+
+async function fetchForex() {
+  const entries = Object.entries(FOREX_SYMBOLS);
+  await Promise.all(entries.map(async ([key, cfg]) => {
+    const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+      + encodeURIComponent(cfg.sym) + '?interval=1d&range=5d';
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(chartUrl),
+      'https://api.allorigins.win/get?url=' + encodeURIComponent(chartUrl),
+    ];
+    for (const proxy of proxies) {
+      try {
+        const resp = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+        if (!resp.ok) continue;
+        const text = await resp.text();
+        if (text.trim().startsWith('<')) continue;
+        const wrapper = JSON.parse(text);
+        const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
+        if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+        const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
+        const meta = j?.chart?.result?.[0]?.meta;
+        if (!meta?.regularMarketPrice) continue;
+        const price = meta.regularMarketPrice;
+        const prevClose = meta.previousClose || meta.chartPreviousClose || price;
+        const change = price - prevClose;
+        FOREX_DATA[key] = {
+          price: parseFloat(price.toFixed(4)),
+          change: parseFloat(change.toFixed(4)),
+          changePct: parseFloat((change / prevClose * 100).toFixed(2)),
+          prevClose: parseFloat(prevClose.toFixed(4)),
+          timestamp: Date.now(),
+        };
+        break;
+      } catch(e) { continue; }
+    }
+  }));
+  FOREX_LOADED = true;
+  console.log('Forex loaded:', Object.keys(FOREX_DATA).length, 'pairs');
+}
 
 // Real-time data store
 let RT = {};           // {key: {price, change, changePct, prevClose, high, low, timestamp, _source}}
@@ -2939,6 +3081,121 @@ function renderMarkets2() {
     <div class="g3">${mktRows}</div>`;
 }
 
+// ── TAB: RE STOCKS ──
+function renderREStocks() {
+  const el = document.getElementById('tab-restocks');
+  if (!el) return;
+
+  // Trigger fetch if not loaded
+  if (!RE_STOCKS_LOADED && !RE_STOCKS_LOADING) {
+    fetchREStocks().then(() => renderREStocks());
+  }
+  // Also fetch Fed news for sentiment
+  if (!FOREX_LOADED) fetchForex();
+
+  // Group stocks by sector
+  const sectors = {};
+  Object.entries(RE_STOCKS).forEach(([sym, cfg]) => {
+    if (!sectors[cfg.sector]) sectors[cfg.sector] = [];
+    sectors[cfg.sector].push({ sym, ...cfg, data: RE_STOCK_DATA[sym] || null });
+  });
+
+  // Sector order
+  const sectorOrder = ['REIT ETF','Builder ETF','mREIT ETF','Apartment REIT','Student Housing','Office REIT','Retail REIT','Net Lease REIT','Storage REIT','Industrial REIT','Tower REIT','Homebuilder','Mortgage REIT','RE Services','RE Tech'];
+
+  // Market status
+  const now = new Date();
+  const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+  const hour = now.getHours(), min = now.getMinutes();
+  const isOpen = !isWeekend && ((hour === 9 && min >= 30) || (hour > 9 && hour < 16));
+  const statusColor = isOpen ? 'var(--green)' : 'var(--muted2)';
+  const statusText = isOpen ? '◉ MARKET OPEN' : '○ MARKET CLOSED';
+  const loadedCount = Object.keys(RE_STOCK_DATA).length;
+  const totalCount = Object.keys(RE_STOCKS).length;
+
+  // Top movers
+  const allWithData = Object.entries(RE_STOCKS).filter(([s]) => RE_STOCK_DATA[s]).map(([s,c]) => ({sym:s, ...c, d:RE_STOCK_DATA[s]}));
+  const topGainers = [...allWithData].sort((a,b) => (b.d.changePct||0)-(a.d.changePct||0)).slice(0,5);
+  const topLosers = [...allWithData].sort((a,b) => (a.d.changePct||0)-(b.d.changePct||0)).slice(0,5);
+
+  // Sector performance summary
+  const sectorPerf = {};
+  Object.entries(sectors).forEach(([sec, stocks]) => {
+    const withData = stocks.filter(s => s.data);
+    if (!withData.length) return;
+    sectorPerf[sec] = { avg: withData.reduce((s,x) => s + (x.data.changePct||0), 0) / withData.length, count: withData.length };
+  });
+
+  function stockRow(s) {
+    const d = s.data;
+    if (!d) return `<tr style="color:var(--muted)"><td style="font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td colspan="4" style="text-align:center;font-size:9px">Loading...</td></tr>`;
+    const isPos = d.changePct >= 0;
+    const chgColor = isPos ? 'var(--green)' : 'var(--red)';
+    const vol = d.volume ? (d.volume >= 1e6 ? (d.volume/1e6).toFixed(1)+'M' : d.volume >= 1e3 ? (d.volume/1e3).toFixed(0)+'K' : d.volume) : '--';
+    return `<tr>
+      <td style="font-weight:600;color:var(--cyan)">${s.sym}</td>
+      <td style="color:var(--white);font-size:10px">${esc(s.name)}</td>
+      <td class="tdr" style="font-weight:600;color:var(--white);font-family:'Share Tech Mono'">${d.price.toFixed(2)}</td>
+      <td class="tdr" style="color:${chgColor};font-family:'Share Tech Mono'">${isPos?'+':''}${d.change.toFixed(2)}</td>
+      <td class="tdr" style="color:${chgColor};font-weight:600">${isPos?'+':''}${d.changePct.toFixed(2)}%</td>
+      <td class="tdr" style="color:var(--muted2)">${vol}</td>
+    </tr>`;
+  }
+
+  const sectionsHtml = sectorOrder.filter(s => sectors[s]).map(sec => {
+    const stocks = sectors[sec];
+    const perf = sectorPerf[sec];
+    const perfColor = perf ? (perf.avg >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted2)';
+    return `<div class="card mb">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:${perfColor}"></span>${sec.toUpperCase()}</div>
+        ${perf ? `<span style="font-size:9px;color:${perfColor};font-weight:600">${perf.avg >= 0 ? '+' : ''}${perf.avg.toFixed(2)}% avg</span>` : ''}
+      </div>
+      <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">CHG</th><th class="tdr">%CHG</th><th class="tdr">VOL</th></tr></thead>
+      <tbody>${stocks.map(stockRow).join('')}</tbody></table>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    ${sh('REAL ESTATE SECTOR STOCKS','LIVE YAHOO FINANCE · ' + statusText)}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:10px;color:${statusColor};font-weight:600">${statusText}</span>
+      <span style="font-size:9px;color:var(--muted2)">${loadedCount}/${totalCount} symbols loaded</span>
+      <span style="font-size:9px;color:var(--muted2)">${RE_STOCKS_LOADED ? 'Last update: ' + new Date().toLocaleTimeString() : 'Fetching...'}</span>
+      <button class="rbtn" onclick="RE_STOCKS_LOADED=false;RE_STOCK_DATA={};fetchREStocks().then(()=>renderREStocks())">⟳ REFRESH</button>
+    </div>
+    <div class="g2 mb">
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>TOP GAINERS</div></div>
+        <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
+        <tbody>${topGainers.map(s => `<tr><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--green);font-weight:600">+${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+      </div>
+      <div class="card">
+        <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--red)"></span>TOP LOSERS</div></div>
+        <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
+        <tbody>${topLosers.map(s => `<tr><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--red);font-weight:600">${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+      </div>
+    </div>
+    <div class="card mb">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--blue)"></span>SECTOR PERFORMANCE HEATMAP</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        ${Object.entries(sectorPerf).sort((a,b) => b[1].avg - a[1].avg).map(([sec, p]) => {
+          const bg = p.avg >= 1 ? 'rgba(0,255,157,.15)' : p.avg >= 0 ? 'rgba(0,255,157,.07)' : p.avg >= -1 ? 'rgba(255,61,90,.07)' : 'rgba(255,61,90,.15)';
+          const c = p.avg >= 0 ? 'var(--green)' : 'var(--red)';
+          return `<div style="background:${bg};border:1px solid ${c}30;border-radius:3px;padding:6px 10px;min-width:120px;flex:1">
+            <div style="font-size:8px;color:var(--muted2);letter-spacing:1px">${sec}</div>
+            <div style="font-size:14px;font-weight:700;color:${c};font-family:'Share Tech Mono'">${p.avg >= 0 ? '+' : ''}${p.avg.toFixed(2)}%</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    ${sectionsHtml}
+    <div class="comm" style="border-left-color:var(--blue)">
+      <div class="ct2">▸ REAL ESTATE SECTOR INTELLIGENCE</div>
+      <p>This tab tracks <strong>${totalCount} real estate securities</strong> across REITs (apartment, office, industrial, retail, net lease), homebuilders, mortgage REITs, CRE service firms, and RE tech. All data from Yahoo Finance with CORS proxy. Prices refresh on tab load — click ⟳ REFRESH for latest.</p>
+      <p style="margin-top:4px">Key signals: Apartment REIT performance leads rent growth expectations. Homebuilder stocks lead housing starts. Mortgage REITs reflect rate sensitivity. Office REITs signal CRE distress levels.</p>
+    </div>`;
+}
+
 function renderCompare() {
   const el = document.getElementById('tab-compare');
   if (!el) return;
@@ -3028,7 +3285,7 @@ async function fredFetch(seriesKey, forceRefresh=false) {
   if (!forceRefresh && isCacheValid(seriesKey)) {
     const cached = cacheGet(seriesKey);
     if (cached?.length) {
-      SERIES_STATUS[seriesKey] = { status:'cached', latest:cached[0].date };
+      SERIES_STATUS[seriesKey] = { status:'cached', latest:cached[0].date, ts:Date.now() };
       return cached;
     }
   }
@@ -3053,7 +3310,7 @@ async function fredFetch(seriesKey, forceRefresh=false) {
     }
     if (j.error_message) throw new Error(j.error_message);
     if (!j.observations?.length) throw new Error('no observations');
-    SERIES_STATUS[seriesKey] = { status:'ok', proxy: proxyName };
+    SERIES_STATUS[seriesKey] = { status:'ok', proxy: proxyName, ts:Date.now() };
     return j;
   }
 
@@ -3076,7 +3333,7 @@ async function fredFetch(seriesKey, forceRefresh=false) {
         .filter(o => o.value !== '.' && o.value !== '')
         .map(o => ({ date: o.date, value: parseFloat(o.value) }));
       cacheSet(seriesKey, data);
-      SERIES_STATUS[seriesKey] = { status:'ok', latest: data[0].date };
+      SERIES_STATUS[seriesKey] = { status:'ok', latest: data[0].date, ts:Date.now() };
       return data;
     } catch(e) { lastErr = e; backoff = Math.min((backoff || 200) * 2, 3000); }
   }
@@ -3084,10 +3341,10 @@ async function fredFetch(seriesKey, forceRefresh=false) {
   // All attempts failed — return stale cache if available
   const stale = cacheGet(seriesKey);
   if (stale?.length) {
-    SERIES_STATUS[seriesKey] = { status:'stale', msg: lastErr?.message, latest: stale[0].date };
+    SERIES_STATUS[seriesKey] = { status:'stale', msg: lastErr?.message, latest: stale[0].date, ts:Date.now() };
     return stale;
   }
-  SERIES_STATUS[seriesKey] = { status:'error', msg: lastErr?.message };
+  SERIES_STATUS[seriesKey] = { status:'error', msg: lastErr?.message, ts:Date.now() };
   return null;
 }
 
@@ -3100,7 +3357,7 @@ async function fetchAll(force=false) {
       const c = cacheGet(k);
       if (c?.length) {
         D[k] = c;
-        SERIES_STATUS[k] = { status:'cached', latest: c[0].date };
+        SERIES_STATUS[k] = { status:'cached', latest: c[0].date, ts:Date.now() };
       }
     }
   });
@@ -3158,12 +3415,32 @@ function updateDHDot(ok, err, stale, total) {
 function updateDHPanel() {
   const list = document.getElementById('dh-list');
   if (!list) return;
-  list.innerHTML = Object.entries(SERIES).map(([k,cfg]) => {
+  // Sort by most recent refresh timestamp (newest first), errors last
+  const entries = Object.entries(SERIES).map(([k,cfg]) => {
     const s = SERIES_STATUS[k] || {};
+    const ts = s.ts || 0; // timestamp of last fetch
+    return { k, cfg, s, ts };
+  }).sort((a,b) => {
+    // Errors/missing go to bottom
+    if (!a.s.status && b.s.status) return 1;
+    if (a.s.status && !b.s.status) return -1;
+    if (a.s.status === 'error' && b.s.status !== 'error') return 1;
+    if (a.s.status !== 'error' && b.s.status === 'error') return -1;
+    return b.ts - a.ts; // newest first
+  });
+  list.innerHTML = entries.map(({k,cfg,s}) => {
     const cls  = s.status==='ok'||s.status==='cached' ? 'ds-ok' : s.status==='stale' ? 'ds-stale' : 'ds-err';
+    const age  = s.ts ? timeAgo(s.ts) : '';
     const txt  = s.status==='ok' ? `✓ LIVE (${s.latest})` : s.status==='cached' ? `✓ CACHED (${s.latest})` : s.status==='stale' ? `⚡ STALE (${s.latest})` : `✗ ${s.msg||'error'}`;
-    return `<div class="dh-series"><span class="dh-name">${k} <span style="color:var(--muted2);font-size:8px">${cfg.id}</span></span><div class="dh-status"><span class="${cls}" style="font-size:8px">${txt}</span></div></div>`;
+    return `<div class="dh-series"><span class="dh-name">${k} <span style="color:var(--muted2);font-size:8px">${cfg.id}</span></span><div class="dh-status"><span class="${cls}" style="font-size:8px">${txt}</span>${age ? `<span style="color:var(--muted);font-size:7px;margin-left:6px">${age}</span>` : ''}</div></div>`;
   }).join('');
+}
+function timeAgo(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+  if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+  return Math.floor(d/86400000) + 'd ago';
 }
 function toggleDH() { document.getElementById('dh-panel').classList.toggle('open'); updateDHPanel(); }
 
@@ -3395,7 +3672,7 @@ function renderTab(name) {
     housing:renderHousing, student:renderStudent, markets:renderMarkets,
     scenarios:renderScenarios, underwrite:renderUnderwrite, signals:renderSignals,
     news:renderNews, universities:renderUniversities, markets2:renderMarkets2,
-    realtime:renderRealtime, compare:renderCompare,
+    realtime:renderRealtime, restocks:renderREStocks, compare:renderCompare,
   };
   if (map[name]) map[name]();
 }
@@ -3473,26 +3750,6 @@ function updateScenProb(which, val) {
   renderScenarios();
 }
 
-// ── MULTI-TAB EXPORT ──
-function exportAllTabs() {
-  document.getElementById('print-subtitle').textContent = 'ALL TABS — ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const tabs = ['regime','overview','rates','liquidity','growth','inflation','housing','student','markets','scenarios','underwrite','signals','realtime','news','universities','markets2'];
-  tabs.forEach(t => { DONE[t]=true; renderTab(t); });
-  document.querySelectorAll('.panel').forEach(p => p.classList.add('active'));
-  const breakStyle = document.createElement('style');
-  breakStyle.id = 'export-all-breaks';
-  breakStyle.textContent = '.panel{page-break-before:always !important;} .panel:first-of-type{page-break-before:auto !important;}';
-  document.head.appendChild(breakStyle);
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => {
-      document.getElementById('export-all-breaks')?.remove();
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      const active = document.querySelector('.tab.active');
-      if (active) document.getElementById('tab-' + active.dataset.tab)?.classList.add('active');
-    }, 500);
-  }, 200);
-}
 
 // ── INIT ──
 
@@ -3738,6 +3995,8 @@ function scheduleRTRefresh() {
   const delay = getRTIntervalMs();
   _rtTimer = setTimeout(() => {
     fetchAllRealtime().then(() => fetchFedWatch());
+    fetchREStocks().then(() => { if (DONE['restocks']) renderREStocks(); });
+    fetchForex().then(() => { if (DONE['rates']) renderRates(); });
     scheduleRTRefresh(); // Reschedule with updated market-hours check
   }, delay);
   // Update topbar badge with 3-tier labels
@@ -3936,6 +4195,8 @@ async function startTerminal() {
   if (EXT_KEYS.SCORECARD) fetchScorecard();
   fetchZillow().then(() => { if (DONE['housing']) renderHousing(); });
   fetchAllRealtime().then(() => fetchFedWatch());
+  fetchREStocks().then(() => { if (DONE['restocks']) renderREStocks(); });
+  fetchForex().then(() => { if (DONE['rates']) renderRates(); });
   scheduleRTRefresh();     // RT prices: 2min market hours, 15min overnight
   scheduleNewsRefresh();   // News: 10min (NewsAPI rate limit aware)
   scheduleFinnhubRefresh();// Economic calendar: 12h
@@ -4175,14 +4436,28 @@ function mc(title, value, chgHtml, label, spHtml, cls='', fkey='') {
            cls==='purp'?'var(--purple)':cls==='info'?'var(--blue)':cls==='oran'?'var(--orange)':'var(--muted)';
   const tag = fkey ? freshnessTag(fkey) : '';
   const tipAttr = fkey && KPI_TIPS[fkey] ? ' data-tip="'+fkey+'" style="cursor:help"' : '';
+  const hasData = fkey && D[fkey] && D[fkey].length >= 3;
+  const expandBtn = hasData ? `<span class="chart-expand-btn" onclick="event.stopPropagation();toggleExpandChart(this,'${fkey}','${dc}')" title="Expand chart">⤢</span>` : '';
   return `<div class="card"${fkey ? ' data-note-key="'+fkey+'"' : ''}>
-    <div class="ct"><div class="ct-left"><span class="cdot" style="background:${dc}"></span><span${tipAttr}>${title}</span>${fkey ? '<span class="note-badge" style="display:'+(CARD_NOTES[fkey]?'inline':'none')+';color:var(--yellow);font-size:8px;cursor:pointer;margin-left:4px" onclick="event.stopPropagation();toggleNote(\''+fkey+'\')">📝</span>' : ''}</div>${tag}</div>
+    <div class="ct"><div class="ct-left"><span class="cdot" style="background:${dc}"></span><span${tipAttr}>${title}</span>${fkey ? '<span class="note-badge" style="display:'+(CARD_NOTES[fkey]?'inline':'none')+';color:var(--yellow);font-size:8px;cursor:pointer;margin-left:4px" onclick="event.stopPropagation();toggleNote(\''+fkey+'\')">📝</span>' : ''}</div><span style="display:flex;align-items:center;gap:4px">${expandBtn}${tag}</span></div>
     <div class="bv ${cls}">${value}</div>
     <div class="vc">${chgHtml}</div>
     <div class="vl">${label}</div>
     ${spHtml?`<div class="sw">${spHtml}</div>`:''}
     ${fkey ? '<div style="font-size:8px;margin-top:2px">' + histBadge(fkey,1,'1M') + histBadge(fkey,3,'3M') + histBadge(fkey,12,'1Y') + '</div>' : ''}
   </div>`;
+}
+
+function toggleExpandChart(btn, key, color) {
+  const card = btn.closest('.card');
+  const existing = card.querySelector('.expanded-chart');
+  if (existing) { existing.remove(); btn.textContent = '⤢'; return; }
+  btn.textContent = '⤡';
+  const div = document.createElement('div');
+  div.className = 'expanded-chart';
+  div.style.cssText = 'margin-top:8px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;';
+  div.innerHTML = bigChart(key, key, color || 'var(--green)', 140);
+  card.appendChild(div);
 }
 
 function sh(t, b='') {
@@ -4571,7 +4846,83 @@ function renderOverview() {
     <div class="g2">
       <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--blue)"></span>FED BALANCE SHEET</div>${freshnessTag('FED_BS')}</div>${bigChart('FED_BS','Fed BS','var(--blue)')}</div>
       <div class="card"><div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>HOUSING STARTS</div>${freshnessTag('HOUSING_STARTS')}</div>${bigChart('HOUSING_STARTS','Starts','var(--green)')}</div>
-    </div>`;
+    </div>
+    ${sh('FED COMMENTARY & POLICY INTELLIGENCE','FOMC · RATES · MONETARY POLICY')}
+    ${buildFedCommentary(R, ff, cpce, t10, mort)}`;
+}
+
+function buildFedCommentary(R, ff, cpce, t10, mort) {
+  // Algorithmic Fed stance analysis
+  const realFFR = ff && cpce ? ff - cpce : null;
+  const stance = realFFR ? (realFFR > 2 ? 'VERY RESTRICTIVE' : realFFR > 1 ? 'RESTRICTIVE' : realFFR > 0 ? 'MILDLY RESTRICTIVE' : 'ACCOMMODATIVE') : '--';
+  const stanceColor = realFFR ? (realFFR > 2 ? 'var(--red)' : realFFR > 1 ? 'var(--orange)' : realFFR > 0 ? 'var(--yellow)' : 'var(--green)') : 'var(--muted2)';
+
+  // FedWatch probabilities from FEDWATCH_DATA
+  const fw = FEDWATCH_DATA || [];
+  const fwHtml = fw.length ? fw.slice(0,4).map(m =>
+    `<div style="flex:1;min-width:120px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:8px;">
+      <div style="font-size:7px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">${esc(m.label||'')}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--cyan);font-family:'Share Tech Mono'">${m.impliedRate ? m.impliedRate.toFixed(2) + '%' : '--'}</div>
+      ${m.cutPct ? `<div style="font-size:8px;color:var(--green)">CUT: ${m.cutPct.toFixed(0)}%</div>` : ''}
+      ${m.holdPct ? `<div style="font-size:8px;color:var(--muted2)">HOLD: ${m.holdPct.toFixed(0)}%</div>` : ''}
+      ${m.hikePct ? `<div style="font-size:8px;color:var(--red)">HIKE: ${m.hikePct.toFixed(0)}%</div>` : ''}
+    </div>`
+  ).join('') : '<div style="color:var(--muted2);font-size:9px">FedWatch data loading — ZQ futures fetching...</div>';
+  const totalCuts = fw.length ? fw[fw.length-1]?.impliedRate && ff ? Math.round((ff - fw[fw.length-1].impliedRate) / 0.25) : 0 : 0;
+
+  // Market-implied policy analysis
+  const t2 = val('T2Y'), mortSpread = mort && t10 ? mort - t10 : null;
+  const curveSignal = t10 && val('T3M') ? t10 - val('T3M') : null;
+  const curveMsg = curveSignal != null ? (curveSignal < 0 ? 'Yield curve <strong>INVERTED</strong> — recession signal active. Historically precedes rate cuts by 6-18 months.' :
+    curveSignal < 0.5 ? 'Yield curve <strong>FLAT</strong> — market pricing limited growth. Transition zone.' :
+    'Yield curve <strong>NORMAL</strong> — market sees healthy growth path.') : 'Curve data unavailable.';
+
+  // Fed news from NEWS_DATA
+  const fedKeywords = ['federal reserve','fomc','powell','rate cut','rate hike','fed rate','monetary policy','basis points','central bank','fed meeting','dot plot','quantitative'];
+  const fedNews = (NEWS_DATA || []).filter(a => {
+    const txt = ((a.title||'') + ' ' + (a.description||'')).toLowerCase();
+    return fedKeywords.some(kw => txt.includes(kw));
+  }).slice(0, 5);
+
+  return `<div class="g2">
+    <div class="card">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:${stanceColor}"></span>FED POLICY STANCE</div></div>
+      <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">CURRENT STANCE</div>
+          <div style="font-family:'Orbitron';font-size:16px;font-weight:700;color:${stanceColor}">${stance}</div></div>
+        <div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">FED FUNDS</div>
+          <div style="font-size:16px;font-weight:700;color:var(--cyan);font-family:'Share Tech Mono'">${fv(ff,2,'%')}</div></div>
+        <div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">REAL FFR</div>
+          <div style="font-size:16px;font-weight:700;color:${stanceColor};font-family:'Share Tech Mono'">${fv(realFFR,2,'%')}</div></div>
+        <div><div style="font-size:7px;color:var(--muted2);letter-spacing:1px">CORE PCE</div>
+          <div style="font-size:16px;font-weight:700;color:${cpce&&cpce>2.5?'var(--yellow)':'var(--green)'};font-family:'Share Tech Mono'">${fv(cpce,1,'%')}</div></div>
+      </div>
+      <div class="comm" style="border-left-color:${stanceColor};margin-top:8px">
+        <div class="ct2" style="color:${stanceColor}">▸ RATE PATH IMPLICATIONS</div>
+        <p>${curveMsg} Real FFR at <strong>${fv(realFFR,2,'%')}</strong> — ${realFFR && realFFR > 1.5 ? 'significantly above neutral. Expect economic drag and eventual rate relief. CRE refi pressure remains.' : realFFR && realFFR > 0 ? 'moderately restrictive. Approaching conditions for pivot. Watch employment and PCE trajectory.' : 'near or below neutral — monetary conditions supportive for asset prices.'}</p>
+        <p style="margin-top:6px">${mortSpread != null ? 'Mortgage spread at <strong>'+fv(mortSpread,0,'bps')+'</strong> vs historical 170bps — '+(mortSpread > 2.2 ? 'elevated premium signals ongoing credit stress.' : 'normalizing, positive for housing demand.') : ''}</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>RATE EXPECTATIONS (FEDWATCH)</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${fwHtml}</div>
+      <div style="font-size:8px;color:var(--muted2);border-top:1px solid var(--border);padding-top:8px;margin-top:4px">
+        Implied from Fed Funds futures (ZQ contracts). Updated with market data. ${totalCuts > 0 ? `Market pricing <strong style="color:var(--green)">${totalCuts} cuts</strong> by year-end.` : totalCuts < 0 ? `Market pricing <strong style="color:var(--red)">${Math.abs(totalCuts)} hikes</strong> by year-end.` : ''}
+      </div>
+    </div>
+  </div>
+  <div class="card mb">
+    <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--purple)"></span>FED & RATES NEWS</div><span style="font-size:8px;color:var(--muted2)">${fedNews.length ? fedNews.length + ' articles' : 'No news key'}</span></div>
+    ${fedNews.length ? fedNews.map(a => `<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <a href="${escUrl(a.url)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--white);text-decoration:none;line-height:1.4;font-weight:500">${esc(a.title)}</a>
+        <span style="font-size:8px;color:var(--muted);white-space:nowrap">${a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}</span>
+      </div>
+      <div style="font-size:9px;color:var(--muted2);margin-top:2px">${esc(a.source?.name||'')} ${a.publishedAt ? '· '+new Date(a.publishedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
+    </div>`).join('') : `<div style="padding:12px;text-align:center;color:var(--muted2);font-size:10px">
+      ${EXT_KEYS.NEWS ? 'No Fed-related headlines found. Will update on next news refresh.' : 'Add NewsAPI key (⚙ KEYS) for live Fed commentary headlines.'}
+    </div>`}
+  </div>`;
 }
 
 // ── TAB: RATES ──
@@ -4610,7 +4961,60 @@ function renderRates() {
       ${mc('CRE CHARGE-OFFS',fv(val('CHARGE_OFF'),2,'%'),fc(chg('CHARGE_OFF'),2,'%')+' QOQ','Realized CRE losses',spark(spk('CHARGE_OFF'),val('CHARGE_OFF')&&val('CHARGE_OFF')>0.5?'var(--red)':'var(--green)'),val('CHARGE_OFF')&&val('CHARGE_OFF')>0.5?'neg':'pos','CHARGE_OFF')}
       ${mc('MORT-10Y SPREAD',fv(val('MORT30')&&t10?val('MORT30')-t10:null,2,'%'),'— hist avg ~170bps','MBS liquidity premium','',val('MORT30')&&t10&&val('MORT30')-t10>2.5?'neg':'pos','MORT30')}
       ${mc('CONST COST IDX',fv(val('CONST_COST'),1),fc(chg('CONST_COST'),1)+' MOM','PPI inputs — replacement cost',spark(spk('CONST_COST'),'var(--orange)'),'warn','CONST_COST')}
-    </div>`;
+    </div>
+    ${sh('FOREX & CURRENCIES','LIVE YAHOO FINANCE')}
+    ${buildForexSection()}`;
+}
+
+function buildForexSection() {
+  if (!FOREX_LOADED && Object.keys(FOREX_DATA).length === 0) {
+    return '<div class="card"><div style="padding:12px;text-align:center;color:var(--muted2);font-size:10px">Loading forex data...</div></div>';
+  }
+  const dxyData = RT['DXY_RT'];
+  const dxyPrice = dxyData?.price || val('DXY');
+  const dxyChg = dxyData?.changePct;
+  const dxyColor = dxyChg ? (dxyChg >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted2)';
+
+  function fxRow(key) {
+    const cfg = FOREX_SYMBOLS[key];
+    const d = FOREX_DATA[key];
+    if (!d) return `<tr><td style="font-weight:600">${cfg.name}</td><td colspan="4" style="color:var(--muted2);font-size:9px">Loading...</td></tr>`;
+    const isPos = d.changePct >= 0;
+    const c = isPos ? 'var(--green)' : 'var(--red)';
+    return `<tr>
+      <td style="font-weight:600;color:var(--cyan)">${cfg.name}</td>
+      <td class="tdr" style="font-weight:600;color:var(--white);font-family:'Share Tech Mono'">${d.price.toFixed(4)}</td>
+      <td class="tdr" style="color:${c};font-family:'Share Tech Mono'">${isPos?'+':''}${d.change.toFixed(4)}</td>
+      <td class="tdr" style="color:${c};font-weight:600">${isPos?'+':''}${d.changePct.toFixed(2)}%</td>
+      <td class="tdl" style="color:var(--muted2);font-size:9px">${cfg.desc}</td>
+    </tr>`;
+  }
+
+  return `<div class="g2">
+    <div class="card">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:${dxyColor}"></span>US DOLLAR INDEX (DXY)</div>
+        ${dxyData ? '<span class="freshness fresh">'+rtAge('DXY_RT')+'</span>' : freshnessTag('DXY')}
+      </div>
+      <div style="display:flex;gap:16px;align-items:baseline;margin-bottom:8px">
+        <div class="bv" style="color:${dxyColor}">${dxyPrice ? dxyPrice.toFixed(2) : '--'}</div>
+        ${dxyChg != null ? `<span style="color:${dxyColor};font-size:13px;font-weight:600">${dxyChg >= 0 ? '+' : ''}${dxyChg.toFixed(2)}%</span>` : ''}
+      </div>
+      <div class="vl">Strong dollar = capital inflow to US. Impacts foreign buyer demand for US RE.</div>
+      <div class="sw">${spark(spk('DXY'), dxyColor)}</div>
+      <div class="comm" style="margin-top:8px;border-left-color:${dxyColor}">
+        <p style="font-size:9px">${dxyPrice ? (dxyPrice > 105 ? '<strong>Strong dollar</strong> — headwind for foreign capital into US RE. Imported goods cheaper, muted inflation support.' :
+          dxyPrice > 95 ? '<strong>Neutral dollar</strong> — balanced FX environment for cross-border RE capital flows.' :
+          '<strong>Weak dollar</strong> — tailwind for foreign buyers of US RE. Supports commodity prices and imported inflation.') : 'Awaiting data...'}</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--cyan)"></span>MAJOR CURRENCY PAIRS</div>
+        <span class="freshness ${FOREX_LOADED ? 'fresh' : ''}">${FOREX_LOADED ? 'LIVE' : 'LOADING'}</span>
+      </div>
+      <table class="dt"><thead><tr><th>PAIR</th><th class="tdr">RATE</th><th class="tdr">CHG</th><th class="tdr">%CHG</th><th>NOTE</th></tr></thead>
+      <tbody>${Object.keys(FOREX_SYMBOLS).map(fxRow).join('')}</tbody></table>
+    </div>
+  </div>`;
 }
 
 // ── TAB: LIQUIDITY ──
