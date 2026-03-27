@@ -92,6 +92,30 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .tab.active .tn{color:var(--green2);}
 .tnew{font-size:8px;background:rgba(176,106,255,.15);color:var(--purple);border:1px solid rgba(176,106,255,.3);padding:1px 4px;border-radius:2px;}
 
+/* ══ RE STOCKS EXPANDABLE ══ */
+.re-stock-row{cursor:pointer;transition:background .15s;}
+.re-stock-row:hover{background:rgba(0,150,255,.04);}
+.re-stock-row.expanded{background:rgba(0,229,255,.04);border-bottom:none;}
+.re-stock-detail{display:none;background:var(--bg3);}
+.re-stock-detail.open{display:table-row;}
+.re-stock-detail td{padding:14px 16px;}
+.re-detail-grid{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;}
+@media(max-width:900px){.re-detail-grid{grid-template-columns:1fr;}}
+.re-expand-arrow{font-size:9px;margin-right:4px;transition:transform .2s;display:inline-block;color:var(--muted2);}
+.re-stock-row.expanded .re-expand-arrow{transform:rotate(90deg);color:var(--cyan);}
+.re-detail-section{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px 12px;}
+.re-detail-section .re-dt{width:100%;font-size:10px;border-collapse:collapse;}
+.re-detail-section .re-dt td{padding:3px 0;border-bottom:1px solid var(--border);}
+.re-detail-section .re-dt td:first-child{color:var(--muted2);letter-spacing:.5px;}
+.re-detail-section .re-dt td:last-child{text-align:right;font-family:'Share Tech Mono',monospace;color:var(--white);}
+.re-52w-bar{height:6px;background:var(--bg2);border-radius:3px;position:relative;margin:6px 0;}
+.re-52w-marker{position:absolute;top:-2px;width:2px;height:10px;background:var(--cyan);border-radius:1px;}
+.re-news-item{padding:5px 0;border-bottom:1px solid var(--border);}
+.re-news-item:last-child{border-bottom:none;}
+.re-news-item a{font-size:10px;color:var(--white);text-decoration:none;line-height:1.4;}
+.re-news-item a:hover{color:var(--cyan);}
+.re-kpi-badge{display:inline-block;font-size:8px;padding:2px 6px;border-radius:2px;letter-spacing:.5px;margin:2px 2px 2px 0;}
+
 /* ══ MAIN ══ */
 .main{padding:12px;max-width:1800px;margin:0 auto;}
 .panel{display:none;animation:fi .2s ease;}
@@ -517,14 +541,14 @@ svg.sp{width:100%;height:36px;overflow:visible;}
   <div class="tab" data-tab="compare"><span class="tn">17</span>COMPARE</div>
 </div>
 
+<div id="freshness-alert" style="display:none;padding:6px 18px;background:rgba(240,192,64,.08);border-bottom:1px solid rgba(240,192,64,.2);font-size:10px;color:var(--yellow);letter-spacing:1px"></div>
+
 </div><!-- /sticky-header-wrap -->
 
 <div id="print-header" style="display:none;padding:20px;border-bottom:2px solid #000;margin-bottom:20px">
   <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;letter-spacing:3px">SH MACRO TERMINAL</div>
   <div style="font-size:11px;color:#666;margin-top:4px" id="print-subtitle"></div>
 </div>
-
-<div id="freshness-alert" style="display:none;padding:6px 18px;background:rgba(240,192,64,.08);border-bottom:1px solid rgba(240,192,64,.2);font-size:10px;color:var(--yellow);letter-spacing:1px"></div>
 <div class="main">
   <div class="panel active" id="tab-regime"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
   <div class="panel" id="tab-overview"><div class="ld"><div class="lt">AWAITING DATA<span class="cur"></span></div><div class="lb"><div class="lf"></div></div></div></div>
@@ -1919,6 +1943,9 @@ async function fetchREStocks() {
           const price = meta.regularMarketPrice;
           const prevClose = meta.previousClose || meta.chartPreviousClose || price;
           const change = price - prevClose;
+          const result = j?.chart?.result?.[0];
+          const closes = result?.indicators?.quote?.[0]?.close?.filter(v => v != null) || [];
+          const timestamps = result?.timestamp || [];
           RE_STOCK_DATA[sym] = {
             price: parseFloat(price.toFixed(2)),
             change: parseFloat(change.toFixed(2)),
@@ -1927,6 +1954,10 @@ async function fetchREStocks() {
             high: meta.regularMarketDayHigh || price,
             low: meta.regularMarketDayLow || price,
             volume: meta.regularMarketVolume || 0,
+            fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || null,
+            fiftyTwoWeekLow: meta.fiftyTwoWeekLow || null,
+            chartData: closes,
+            chartTimestamps: timestamps,
             timestamp: Date.now(),
           };
           break;
@@ -1937,6 +1968,69 @@ async function fetchREStocks() {
   RE_STOCKS_LOADED = true;
   RE_STOCKS_LOADING = false;
   console.log('RE Stocks loaded:', Object.keys(RE_STOCK_DATA).length, 'symbols');
+}
+
+// ── RE Stock Detail Fetcher (lazy-load on expand) ──
+let RE_STOCKS_EXPANDED = new Set();
+async function fetchREStockDetail(sym) {
+  if (RE_STOCK_DATA[sym]?.detail && Date.now() - RE_STOCK_DATA[sym].detail._ts < 1800000) return RE_STOCK_DATA[sym].detail;
+  const modules = 'price,summaryDetail,defaultKeyStatistics,financialData,assetProfile';
+  const url = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/' + encodeURIComponent(sym) + '?modules=' + modules;
+  const proxies = [
+    'https://corsproxy.io/?' + encodeURIComponent(url),
+    'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
+    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+  ];
+  for (const proxy of proxies) {
+    try {
+      const resp = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
+      if (!resp.ok) continue;
+      const text = await resp.text();
+      if (text.trim().startsWith('<')) continue;
+      const wrapper = JSON.parse(text);
+      const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
+      if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
+      const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
+      const r = j?.quoteSummary?.result?.[0];
+      if (!r) continue;
+      const p = r.price || {}, sd = r.summaryDetail || {}, ks = r.defaultKeyStatistics || {}, fd = r.financialData || {}, ap = r.assetProfile || {};
+      const detail = {
+        marketCap: p.marketCap?.raw || sd.marketCap?.raw || null,
+        trailingPE: sd.trailingPE?.raw || null,
+        forwardPE: sd.forwardPE?.raw || ks.forwardPE?.raw || null,
+        eps: ks.trailingEps?.raw || null,
+        dividendYield: sd.dividendYield?.raw || null,
+        dividendRate: sd.dividendRate?.raw || null,
+        beta: sd.beta?.raw || ks.beta?.raw || null,
+        priceToBook: sd.priceToBook?.raw || ks.priceToBook?.raw || null,
+        fiftyTwoWeekHigh: sd.fiftyTwoWeekHigh?.raw || null,
+        fiftyTwoWeekLow: sd.fiftyTwoWeekLow?.raw || null,
+        fiftyDayAvg: sd.fiftyDayAverage?.raw || null,
+        twoHundredDayAvg: sd.twoHundredDayAverage?.raw || null,
+        debtToEquity: fd.debtToEquity?.raw || null,
+        returnOnEquity: fd.returnOnEquity?.raw || null,
+        operatingMargins: fd.operatingMargins?.raw || null,
+        revenueGrowth: fd.revenueGrowth?.raw || null,
+        totalRevenue: fd.totalRevenue?.raw || null,
+        targetMeanPrice: fd.targetMeanPrice?.raw || null,
+        numberOfAnalysts: fd.numberOfAnalystOpinions?.raw || null,
+        earningsGrowth: ks.earningsQuarterlyGrowth?.raw || null,
+        enterpriseValue: ks.enterpriseValue?.raw || null,
+        profitMargins: ks.profitMargins?.raw || null,
+        bookValue: ks.bookValue?.raw || null,
+        sharesOutstanding: ks.sharesOutstanding?.raw || null,
+        sector: ap.sector || null,
+        industry: ap.industry || null,
+        employees: ap.fullTimeEmployees || null,
+        summary: ap.longBusinessSummary || null,
+        _ts: Date.now()
+      };
+      if (!RE_STOCK_DATA[sym]) RE_STOCK_DATA[sym] = {};
+      RE_STOCK_DATA[sym].detail = detail;
+      return detail;
+    } catch(e) { continue; }
+  }
+  return null;
 }
 
 // ══ FOREX SYMBOLS for Rates tab ══
@@ -3085,25 +3179,15 @@ function renderMarkets2() {
 function renderREStocks() {
   const el = document.getElementById('tab-restocks');
   if (!el) return;
-
-  // Trigger fetch if not loaded
-  if (!RE_STOCKS_LOADED && !RE_STOCKS_LOADING) {
-    fetchREStocks().then(() => renderREStocks());
-  }
-  // Also fetch Fed news for sentiment
+  if (!RE_STOCKS_LOADED && !RE_STOCKS_LOADING) { fetchREStocks().then(() => renderREStocks()); }
   if (!FOREX_LOADED) fetchForex();
 
-  // Group stocks by sector
   const sectors = {};
   Object.entries(RE_STOCKS).forEach(([sym, cfg]) => {
     if (!sectors[cfg.sector]) sectors[cfg.sector] = [];
     sectors[cfg.sector].push({ sym, ...cfg, data: RE_STOCK_DATA[sym] || null });
   });
-
-  // Sector order
   const sectorOrder = ['REIT ETF','Builder ETF','mREIT ETF','Apartment REIT','Student Housing','Office REIT','Retail REIT','Net Lease REIT','Storage REIT','Industrial REIT','Tower REIT','Homebuilder','Mortgage REIT','RE Services','RE Tech'];
-
-  // Market status
   const now = new Date();
   const isWeekend = now.getDay() === 0 || now.getDay() === 6;
   const hour = now.getHours(), min = now.getMinutes();
@@ -3113,12 +3197,9 @@ function renderREStocks() {
   const loadedCount = Object.keys(RE_STOCK_DATA).length;
   const totalCount = Object.keys(RE_STOCKS).length;
 
-  // Top movers
   const allWithData = Object.entries(RE_STOCKS).filter(([s]) => RE_STOCK_DATA[s]).map(([s,c]) => ({sym:s, ...c, d:RE_STOCK_DATA[s]}));
   const topGainers = [...allWithData].sort((a,b) => (b.d.changePct||0)-(a.d.changePct||0)).slice(0,5);
   const topLosers = [...allWithData].sort((a,b) => (a.d.changePct||0)-(b.d.changePct||0)).slice(0,5);
-
-  // Sector performance summary
   const sectorPerf = {};
   Object.entries(sectors).forEach(([sec, stocks]) => {
     const withData = stocks.filter(s => s.data);
@@ -3126,20 +3207,32 @@ function renderREStocks() {
     sectorPerf[sec] = { avg: withData.reduce((s,x) => s + (x.data.changePct||0), 0) / withData.length, count: withData.length };
   });
 
+  function fmtMktCap(v) { if (!v) return '--'; if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T'; if (v >= 1e9) return '$'+(v/1e9).toFixed(2)+'B'; if (v >= 1e6) return '$'+(v/1e6).toFixed(0)+'M'; return '$'+v.toLocaleString(); }
+  function fmtVol(v) { if (!v) return '--'; if (v >= 1e6) return (v/1e6).toFixed(1)+'M'; if (v >= 1e3) return (v/1e3).toFixed(0)+'K'; return v; }
+  function pctFmt(v) { if (v == null) return '--'; return (v*100).toFixed(1)+'%'; }
+
   function stockRow(s) {
     const d = s.data;
-    if (!d) return `<tr style="color:var(--muted)"><td style="font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td colspan="4" style="text-align:center;font-size:9px">Loading...</td></tr>`;
+    const isExpanded = RE_STOCKS_EXPANDED.has(s.sym);
+    const arrow = `<span class="re-expand-arrow">${isExpanded ? '▾' : '▸'}</span>`;
+    if (!d) return `<tr class="re-stock-row" data-sym="${s.sym}" onclick="toggleREStockDetail('${s.sym}')"><td style="font-weight:600">${arrow}${s.sym}</td><td>${esc(s.name)}</td><td colspan="5" style="text-align:center;font-size:9px;color:var(--muted)">Loading...</td></tr>
+    <tr class="re-stock-detail" id="re-detail-${s.sym}"><td colspan="7"></td></tr>`;
     const isPos = d.changePct >= 0;
     const chgColor = isPos ? 'var(--green)' : 'var(--red)';
-    const vol = d.volume ? (d.volume >= 1e6 ? (d.volume/1e6).toFixed(1)+'M' : d.volume >= 1e3 ? (d.volume/1e3).toFixed(0)+'K' : d.volume) : '--';
-    return `<tr>
-      <td style="font-weight:600;color:var(--cyan)">${s.sym}</td>
+    const vol = fmtVol(d.volume);
+    const miniSpark = d.chartData && d.chartData.length >= 2 ? spark(d.chartData, chgColor, 22) : '';
+    const w52h = d.fiftyTwoWeekHigh, w52l = d.fiftyTwoWeekLow;
+    const w52range = w52h && w52l ? `<span style="font-size:8px;color:var(--muted2)">${w52l.toFixed(0)}-${w52h.toFixed(0)}</span>` : '';
+    return `<tr class="re-stock-row ${isExpanded?'expanded':''}" data-sym="${s.sym}" onclick="toggleREStockDetail('${s.sym}')">
+      <td style="font-weight:600;color:var(--cyan)">${arrow}${s.sym}</td>
       <td style="color:var(--white);font-size:10px">${esc(s.name)}</td>
       <td class="tdr" style="font-weight:600;color:var(--white);font-family:'Share Tech Mono'">${d.price.toFixed(2)}</td>
       <td class="tdr" style="color:${chgColor};font-family:'Share Tech Mono'">${isPos?'+':''}${d.change.toFixed(2)}</td>
       <td class="tdr" style="color:${chgColor};font-weight:600">${isPos?'+':''}${d.changePct.toFixed(2)}%</td>
       <td class="tdr" style="color:var(--muted2)">${vol}</td>
-    </tr>`;
+      <td class="tdr">${miniSpark} ${w52range}</td>
+    </tr>
+    <tr class="re-stock-detail ${isExpanded?'open':''}" id="re-detail-${s.sym}"><td colspan="7">${isExpanded ? buildREDetailPanel(s.sym) : ''}</td></tr>`;
   }
 
   const sectionsHtml = sectorOrder.filter(s => sectors[s]).map(sec => {
@@ -3150,29 +3243,29 @@ function renderREStocks() {
       <div class="ct"><div class="ct-left"><span class="cdot" style="background:${perfColor}"></span>${sec.toUpperCase()}</div>
         ${perf ? `<span style="font-size:9px;color:${perfColor};font-weight:600">${perf.avg >= 0 ? '+' : ''}${perf.avg.toFixed(2)}% avg</span>` : ''}
       </div>
-      <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">CHG</th><th class="tdr">%CHG</th><th class="tdr">VOL</th></tr></thead>
+      <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">CHG</th><th class="tdr">%CHG</th><th class="tdr">VOL</th><th class="tdr">CHART / 52W</th></tr></thead>
       <tbody>${stocks.map(stockRow).join('')}</tbody></table>
     </div>`;
   }).join('');
 
   el.innerHTML = `
-    ${sh('REAL ESTATE SECTOR STOCKS','LIVE YAHOO FINANCE · ' + statusText)}
+    ${sh('REAL ESTATE SECTOR STOCKS','LIVE YAHOO FINANCE · CLICK ANY TICKER TO EXPAND · ' + statusText)}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
       <span style="font-size:10px;color:${statusColor};font-weight:600">${statusText}</span>
       <span style="font-size:9px;color:var(--muted2)">${loadedCount}/${totalCount} symbols loaded</span>
       <span style="font-size:9px;color:var(--muted2)">${RE_STOCKS_LOADED ? 'Last update: ' + new Date().toLocaleTimeString() : 'Fetching...'}</span>
-      <button class="rbtn" onclick="RE_STOCKS_LOADED=false;RE_STOCK_DATA={};fetchREStocks().then(()=>renderREStocks())">⟳ REFRESH</button>
+      <button class="rbtn" onclick="RE_STOCKS_LOADED=false;RE_STOCK_DATA={};RE_STOCKS_EXPANDED.clear();fetchREStocks().then(()=>renderREStocks())">⟳ REFRESH</button>
     </div>
     <div class="g2 mb">
       <div class="card">
         <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--green)"></span>TOP GAINERS</div></div>
         <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
-        <tbody>${topGainers.map(s => `<tr><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--green);font-weight:600">+${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+        <tbody>${topGainers.map(s => `<tr style="cursor:pointer" onclick="toggleREStockDetail('${s.sym}');document.getElementById('re-detail-${s.sym}')?.scrollIntoView({behavior:'smooth',block:'center'})"><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--green);font-weight:600">+${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
       </div>
       <div class="card">
         <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--red)"></span>TOP LOSERS</div></div>
         <table class="dt"><thead><tr><th>TICKER</th><th>NAME</th><th class="tdr">PRICE</th><th class="tdr">%CHG</th></tr></thead>
-        <tbody>${topLosers.map(s => `<tr><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--red);font-weight:600">${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
+        <tbody>${topLosers.map(s => `<tr style="cursor:pointer" onclick="toggleREStockDetail('${s.sym}');document.getElementById('re-detail-${s.sym}')?.scrollIntoView({behavior:'smooth',block:'center'})"><td style="color:var(--cyan);font-weight:600">${s.sym}</td><td>${esc(s.name)}</td><td class="tdr" style="font-family:'Share Tech Mono'">${s.d.price.toFixed(2)}</td><td class="tdr" style="color:var(--red);font-weight:600">${s.d.changePct.toFixed(2)}%</td></tr>`).join('')}</tbody></table>
       </div>
     </div>
     <div class="card mb">
@@ -3191,9 +3284,173 @@ function renderREStocks() {
     ${sectionsHtml}
     <div class="comm" style="border-left-color:var(--blue)">
       <div class="ct2">▸ REAL ESTATE SECTOR INTELLIGENCE</div>
-      <p>This tab tracks <strong>${totalCount} real estate securities</strong> across REITs (apartment, office, industrial, retail, net lease), homebuilders, mortgage REITs, CRE service firms, and RE tech. All data from Yahoo Finance with CORS proxy. Prices refresh on tab load — click ⟳ REFRESH for latest.</p>
+      <p>Tracking <strong>${totalCount} real estate securities</strong> — click any ticker for detailed fundamentals, ratios, analyst targets, and related news. Data from Yahoo Finance via CORS proxy.</p>
       <p style="margin-top:4px">Key signals: Apartment REIT performance leads rent growth expectations. Homebuilder stocks lead housing starts. Mortgage REITs reflect rate sensitivity. Office REITs signal CRE distress levels.</p>
     </div>`;
+}
+
+// ── RE Stock Detail Panel Builder & Toggle ──
+function toggleREStockDetail(sym) {
+  const detailRow = document.getElementById('re-detail-' + sym);
+  const stockRow = document.querySelector(`.re-stock-row[data-sym="${sym}"]`);
+  if (!detailRow || !stockRow) return;
+  const isOpen = detailRow.classList.contains('open');
+  if (isOpen) {
+    detailRow.classList.remove('open');
+    stockRow.classList.remove('expanded');
+    RE_STOCKS_EXPANDED.delete(sym);
+  } else {
+    detailRow.classList.add('open');
+    stockRow.classList.add('expanded');
+    RE_STOCKS_EXPANDED.add(sym);
+    const td = detailRow.querySelector('td');
+    if (td && !td.innerHTML.includes('re-detail-grid')) {
+      td.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted2);font-size:10px"><span style="animation:pulse2 .8s infinite;display:inline-block">⟳</span> Loading fundamentals for ' + sym + '...</div>';
+      fetchREStockDetail(sym).then(detail => {
+        td.innerHTML = buildREDetailPanel(sym);
+      });
+    }
+  }
+}
+
+function buildREDetailPanel(sym) {
+  const cfg = RE_STOCKS[sym] || {};
+  const d = RE_STOCK_DATA[sym] || {};
+  const det = d.detail || {};
+  const price = d.price;
+
+  function fmtMktCap(v) { if (!v) return '--'; if (v >= 1e12) return '$'+(v/1e12).toFixed(2)+'T'; if (v >= 1e9) return '$'+(v/1e9).toFixed(2)+'B'; if (v >= 1e6) return '$'+(v/1e6).toFixed(0)+'M'; return '$'+(v||0).toLocaleString(); }
+  function pf(v, suffix='') { if (v == null) return '--'; return typeof v === 'number' ? v.toFixed(2) + suffix : v + suffix; }
+  function pctF(v) { if (v == null) return '--'; return (v * 100).toFixed(1) + '%'; }
+
+  // 52-week range bar
+  const w52h = det.fiftyTwoWeekHigh || d.fiftyTwoWeekHigh;
+  const w52l = det.fiftyTwoWeekLow || d.fiftyTwoWeekLow;
+  let w52bar = '';
+  if (w52h && w52l && price) {
+    const pct = Math.max(0, Math.min(100, ((price - w52l) / (w52h - w52l)) * 100));
+    const barColor = pct > 50 ? 'var(--green)' : 'var(--red)';
+    w52bar = `<div style="margin:8px 0">
+      <div style="font-size:8px;color:var(--muted2);margin-bottom:3px;display:flex;justify-content:space-between"><span>52W LOW: $${w52l.toFixed(2)}</span><span>52W HIGH: $${w52h.toFixed(2)}</span></div>
+      <div class="re-52w-bar" style="background:linear-gradient(90deg,var(--red)20,var(--bg2) 20%,var(--bg2) 80%,var(--green)20 80%)">
+        <div class="re-52w-marker" style="left:${pct}%"></div>
+      </div>
+      <div style="font-size:8px;text-align:center;color:var(--cyan)">Current: $${price.toFixed(2)} (${pct.toFixed(0)}% of range)</div>
+    </div>`;
+  }
+
+  // Analyst target
+  let analystHtml = '';
+  if (det.targetMeanPrice && price) {
+    const upside = ((det.targetMeanPrice - price) / price * 100).toFixed(1);
+    const isUp = det.targetMeanPrice > price;
+    analystHtml = `<div style="margin-top:8px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:3px">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1px">ANALYST CONSENSUS TARGET</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
+        <span style="font-size:18px;font-weight:700;color:var(--cyan);font-family:'Share Tech Mono'">$${det.targetMeanPrice.toFixed(2)}</span>
+        <span style="font-size:11px;color:${isUp?'var(--green)':'var(--red)'};font-weight:600">${isUp?'▲':'▼'} ${isUp?'+':''}${upside}%</span>
+        ${det.numberOfAnalysts ? `<span style="font-size:8px;color:var(--muted2)">(${det.numberOfAnalysts} analysts)</span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Mini chart
+  let chartHtml = '';
+  if (d.chartData && d.chartData.length >= 2) {
+    const isPos = d.changePct >= 0;
+    chartHtml = `<div style="margin-top:8px">${spark(d.chartData, isPos ? 'var(--green)' : 'var(--red)', 50)}</div>
+      <div style="font-size:7px;color:var(--muted2);text-align:center">5-DAY PRICE CHART</div>`;
+  }
+
+  // Sector KPI badges
+  const sectorKPIs = {
+    'Apartment REIT': [{label:'RATE SENSITIVE',color:'var(--yellow)'},{label:'RENT GROWTH PROXY',color:'var(--green)'},{label:'OCCUPANCY DRIVEN',color:'var(--cyan)'}],
+    'Student Housing': [{label:'ENROLLMENT DEPENDENT',color:'var(--purple)'},{label:'SEASONAL DEMAND',color:'var(--blue)'}],
+    'Office REIT': [{label:'CRE STRESS PROXY',color:'var(--red)'},{label:'WFH HEADWIND',color:'var(--orange)'}],
+    'Retail REIT': [{label:'CONSUMER HEALTH',color:'var(--yellow)'},{label:'FOOT TRAFFIC',color:'var(--blue)'}],
+    'Net Lease REIT': [{label:'RATE BELLWETHER',color:'var(--cyan)'},{label:'INFLATION HEDGE',color:'var(--green)'}],
+    'Storage REIT': [{label:'MOBILITY INDICATOR',color:'var(--purple)'},{label:'HOUSING CYCLE',color:'var(--blue)'}],
+    'Industrial REIT': [{label:'E-COMMERCE PROXY',color:'var(--cyan)'},{label:'SUPPLY CHAIN',color:'var(--orange)'}],
+    'Tower REIT': [{label:'DIGITAL INFRA',color:'var(--blue)'},{label:'5G CAPEX',color:'var(--purple)'}],
+    'Homebuilder': [{label:'HOUSING STARTS LEAD',color:'var(--green)'},{label:'MORTGAGE SENSITIVE',color:'var(--yellow)'},{label:'LAND BANK VALUE',color:'var(--orange)'}],
+    'Mortgage REIT': [{label:'BOOK VALUE INDICATOR',color:'var(--cyan)'},{label:'SPREAD COMPRESSION',color:'var(--red)'},{label:'LEVERAGE SENSITIVE',color:'var(--orange)'}],
+    'RE Services': [{label:'TRANSACTION VOLUME',color:'var(--blue)'},{label:'CRE ACTIVITY PROXY',color:'var(--green)'}],
+    'RE Tech': [{label:'HOUSING SENTIMENT',color:'var(--purple)'},{label:'LEAD GENERATION',color:'var(--cyan)'}],
+    'REIT ETF': [{label:'BROAD SECTOR',color:'var(--blue)'},{label:'BENCHMARK',color:'var(--muted2)'}],
+    'Builder ETF': [{label:'HOUSING BASKET',color:'var(--green)'}],
+    'mREIT ETF': [{label:'RATE VOL BASKET',color:'var(--orange)'}],
+  };
+  const badges = (sectorKPIs[cfg.sector] || []).map(b =>
+    `<span class="re-kpi-badge" style="background:${b.color}15;color:${b.color};border:1px solid ${b.color}30">${b.label}</span>`
+  ).join('');
+
+  // Related news
+  const symRegex = new RegExp('\\b' + sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+  const nameWords = (cfg.name || '').split(/\s+/).filter(w => w.length > 3);
+  const relatedNews = (NEWS_DATA || []).filter(a => {
+    const txt = ((a.title||'') + ' ' + (a.description||'')).toLowerCase();
+    return symRegex.test(txt) || nameWords.some(w => txt.includes(w.toLowerCase()));
+  }).slice(0, 4);
+
+  const newsHtml = relatedNews.length ? relatedNews.map(a =>
+    `<div class="re-news-item"><a href="${escUrl(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a>
+      <div style="font-size:8px;color:var(--muted2)">${esc(a.source?.name||'')} · ${a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}</div></div>`
+  ).join('') : '<div style="font-size:9px;color:var(--muted2);padding:8px 0">No recent headlines for this ticker.</div>';
+
+  // Description
+  const descText = det.summary ? esc(det.summary).substring(0, 280) + (det.summary.length > 280 ? '...' : '') : esc(cfg.desc || '');
+
+  return `<div class="re-detail-grid">
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">KEY FINANCIALS</div>
+      <table class="re-dt">
+        <tr><td>MARKET CAP</td><td>${fmtMktCap(det.marketCap)}</td></tr>
+        <tr><td>P/E (TTM)</td><td>${pf(det.trailingPE)}</td></tr>
+        <tr><td>P/E (FWD)</td><td>${pf(det.forwardPE)}</td></tr>
+        <tr><td>EPS</td><td>${det.eps != null ? '$'+det.eps.toFixed(2) : '--'}</td></tr>
+        <tr><td>P/B RATIO</td><td>${pf(det.priceToBook)}</td></tr>
+        <tr><td>BOOK VALUE</td><td>${det.bookValue != null ? '$'+det.bookValue.toFixed(2) : '--'}</td></tr>
+        <tr><td>DIV YIELD</td><td style="color:${det.dividendYield && det.dividendYield > 0.03 ? 'var(--green)' : 'var(--white)'}">${det.dividendYield != null ? (det.dividendYield*100).toFixed(2)+'%' : '--'}</td></tr>
+        <tr><td>DIV RATE</td><td>${det.dividendRate != null ? '$'+det.dividendRate.toFixed(2) : '--'}</td></tr>
+        <tr><td>BETA</td><td style="color:${det.beta && det.beta > 1.2 ? 'var(--yellow)' : 'var(--white)'}">${pf(det.beta)}</td></tr>
+        <tr><td>DEBT/EQUITY</td><td style="color:${det.debtToEquity && det.debtToEquity > 200 ? 'var(--red)' : 'var(--white)'}">${det.debtToEquity != null ? det.debtToEquity.toFixed(0)+'%' : '--'}</td></tr>
+        <tr><td>ROE</td><td style="color:${det.returnOnEquity && det.returnOnEquity > 0.1 ? 'var(--green)' : 'var(--white)'}">${pctF(det.returnOnEquity)}</td></tr>
+        <tr><td>OP MARGIN</td><td>${pctF(det.operatingMargins)}</td></tr>
+        <tr><td>PROFIT MARGIN</td><td>${pctF(det.profitMargins)}</td></tr>
+        <tr><td>REV GROWTH</td><td style="color:${det.revenueGrowth && det.revenueGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.revenueGrowth)}</td></tr>
+        <tr><td>EPS GROWTH (Q)</td><td style="color:${det.earningsGrowth && det.earningsGrowth > 0 ? 'var(--green)' : 'var(--red)'}">${pctF(det.earningsGrowth)}</td></tr>
+        <tr><td>50-DAY AVG</td><td>${det.fiftyDayAvg != null ? '$'+det.fiftyDayAvg.toFixed(2) : '--'}</td></tr>
+        <tr><td>200-DAY AVG</td><td>${det.twoHundredDayAvg != null ? '$'+det.twoHundredDayAvg.toFixed(2) : '--'}</td></tr>
+      </table>
+      ${!det._ts ? '<div style="font-size:8px;color:var(--yellow);margin-top:6px">⟳ Loading detailed data...</div>' : ''}
+    </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">CHARTS & TARGETS</div>
+      ${w52bar}
+      ${chartHtml}
+      ${analystHtml}
+      <div style="margin-top:10px">
+        <div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:4px">SECTOR SIGNALS</div>
+        ${badges}
+      </div>
+      <div style="margin-top:10px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:3px">
+        <div style="font-size:8px;color:var(--muted2);letter-spacing:1px">QUICK STATS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;font-size:10px">
+          <div><span style="color:var(--muted2)">Open:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.prevClose ? '$'+d.prevClose.toFixed(2) : '--'}</span></div>
+          <div><span style="color:var(--muted2)">High:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.high ? '$'+d.high.toFixed(2) : '--'}</span></div>
+          <div><span style="color:var(--muted2)">Low:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${d.low ? '$'+d.low.toFixed(2) : '--'}</span></div>
+          <div><span style="color:var(--muted2)">Vol:</span> <span style="color:var(--white);font-family:'Share Tech Mono'">${fmtVol(d.volume)}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="re-detail-section">
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px">ABOUT & NEWS</div>
+      <div style="font-size:10px;color:var(--text);line-height:1.5;margin-bottom:10px">${descText}</div>
+      ${det.industry ? `<div style="font-size:8px;color:var(--muted2);margin-bottom:4px">Industry: <span style="color:var(--white)">${esc(det.industry)}</span>${det.employees ? ' · '+det.employees.toLocaleString()+' employees' : ''}</div>` : ''}
+      <div style="font-size:8px;color:var(--muted2);letter-spacing:1px;margin:10px 0 6px;border-top:1px solid var(--border);padding-top:8px">RELATED NEWS</div>
+      ${newsHtml}
+    </div>
+  </div>`;
 }
 
 function renderCompare() {
@@ -3415,24 +3672,40 @@ function updateDHDot(ok, err, stale, total) {
 function updateDHPanel() {
   const list = document.getElementById('dh-list');
   if (!list) return;
-  // Sort by most recent refresh timestamp (newest first), errors last
+  // Sort by data date (latest value date), with live data first, then cached, then stale, then errors
   const entries = Object.entries(SERIES).map(([k,cfg]) => {
     const s = SERIES_STATUS[k] || {};
-    const ts = s.ts || 0; // timestamp of last fetch
-    return { k, cfg, s, ts };
+    const ts = s.ts || 0;
+    // Parse the latest date string to get actual data date
+    const dataDate = s.latest ? new Date(s.latest).getTime() : 0;
+    const statusRank = s.status === 'ok' ? 0 : s.status === 'cached' ? 1 : s.status === 'stale' ? 2 : s.status === 'error' ? 3 : 4;
+    return { k, cfg, s, ts, dataDate, statusRank };
   }).sort((a,b) => {
-    // Errors/missing go to bottom
-    if (!a.s.status && b.s.status) return 1;
-    if (a.s.status && !b.s.status) return -1;
-    if (a.s.status === 'error' && b.s.status !== 'error') return 1;
-    if (a.s.status !== 'error' && b.s.status === 'error') return -1;
-    return b.ts - a.ts; // newest first
+    // Primary: status rank (live → cached → stale → error → missing)
+    if (a.statusRank !== b.statusRank) return a.statusRank - b.statusRank;
+    // Secondary: by data date (newest data first), fall back to fetch timestamp
+    const aDate = a.dataDate || a.ts;
+    const bDate = b.dataDate || b.ts;
+    return bDate - aDate;
   });
-  list.innerHTML = entries.map(({k,cfg,s}) => {
+  const liveCount = entries.filter(e => e.s.status === 'ok').length;
+  const cachedCount = entries.filter(e => e.s.status === 'cached').length;
+  const staleCount = entries.filter(e => e.s.status === 'stale').length;
+  const errCount = entries.filter(e => e.s.status === 'error').length;
+  const pendingCount = entries.filter(e => !e.s.status).length;
+  const summaryHtml = `<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;font-size:9px">
+    <span style="color:var(--green)">● LIVE: ${liveCount}</span>
+    <span style="color:var(--cyan)">● CACHED: ${cachedCount}</span>
+    <span style="color:var(--yellow)">● STALE: ${staleCount}</span>
+    <span style="color:var(--red)">● ERROR: ${errCount}</span>
+    ${pendingCount ? `<span style="color:var(--muted)">● PENDING: ${pendingCount}</span>` : ''}
+  </div>`;
+  list.innerHTML = summaryHtml + entries.map(({k,cfg,s,dataDate}) => {
     const cls  = s.status==='ok'||s.status==='cached' ? 'ds-ok' : s.status==='stale' ? 'ds-stale' : 'ds-err';
-    const age  = s.ts ? timeAgo(s.ts) : '';
-    const txt  = s.status==='ok' ? `✓ LIVE (${s.latest})` : s.status==='cached' ? `✓ CACHED (${s.latest})` : s.status==='stale' ? `⚡ STALE (${s.latest})` : `✗ ${s.msg||'error'}`;
-    return `<div class="dh-series"><span class="dh-name">${k} <span style="color:var(--muted2);font-size:8px">${cfg.id}</span></span><div class="dh-status"><span class="${cls}" style="font-size:8px">${txt}</span>${age ? `<span style="color:var(--muted);font-size:7px;margin-left:6px">${age}</span>` : ''}</div></div>`;
+    const fetchAge = s.ts ? timeAgo(s.ts) : '';
+    const dataDateStr = s.latest || '';
+    const statusLabel = s.status==='ok' ? '✓ LIVE' : s.status==='cached' ? '✓ CACHED' : s.status==='stale' ? '⚡ STALE' : s.status==='error' ? '✗ ERROR' : '○ PENDING';
+    return `<div class="dh-series"><span class="dh-name">${k} <span style="color:var(--muted2);font-size:8px">${cfg.id}</span></span><div class="dh-status"><span class="${cls}" style="font-size:8px">${statusLabel}</span>${dataDateStr ? `<span style="color:var(--muted2);font-size:7px;margin-left:4px">${dataDateStr}</span>` : ''}${fetchAge ? `<span style="color:var(--muted);font-size:7px;margin-left:4px">fetched ${fetchAge}</span>` : ''}</div></div>`;
   }).join('');
 }
 function timeAgo(ts) {
@@ -4878,11 +5151,11 @@ function buildFedCommentary(R, ff, cpce, t10, mort) {
     'Yield curve <strong>NORMAL</strong> — market sees healthy growth path.') : 'Curve data unavailable.';
 
   // Fed news from NEWS_DATA
-  const fedKeywords = ['federal reserve','fomc','powell','rate cut','rate hike','fed rate','monetary policy','basis points','central bank','fed meeting','dot plot','quantitative'];
+  const fedKeywords = ['federal reserve','fomc','powell','rate cut','rate hike','fed rate','monetary policy','basis points','central bank','fed meeting','dot plot','quantitative','tightening','easing','hawkish','dovish','fed funds','interest rate','treasury yield','rate decision','fed chair','fed governor','waller','bowman','barkin','goolsbee','kashkari','williams','jefferson','cook','kugler','daly','bostic','mester','harker','logan'];
   const fedNews = (NEWS_DATA || []).filter(a => {
     const txt = ((a.title||'') + ' ' + (a.description||'')).toLowerCase();
     return fedKeywords.some(kw => txt.includes(kw));
-  }).slice(0, 5);
+  }).slice(0, 10);
 
   return `<div class="g2">
     <div class="card">
@@ -4912,17 +5185,19 @@ function buildFedCommentary(R, ff, cpce, t10, mort) {
     </div>
   </div>
   <div class="card mb">
-    <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--purple)"></span>FED & RATES NEWS</div><span style="font-size:8px;color:var(--muted2)">${fedNews.length ? fedNews.length + ' articles' : 'No news key'}</span></div>
-    ${fedNews.length ? fedNews.map(a => `<div style="padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+    <div class="ct"><div class="ct-left"><span class="cdot" style="background:var(--purple)"></span>FED & RATES NEWS</div><span style="font-size:8px;color:var(--muted2)">${fedNews.length ? fedNews.length + ' articles' : 'No news key'} · Showing up to 10</span></div>
+    ${fedNews.length ? `<div style="max-height:420px;overflow-y:auto">` + fedNews.map((a, i) => `<div style="padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:8px;color:var(--muted);min-width:14px;text-align:right;padding-top:2px">${i+1}.</span>
+      <div style="flex:1">
         <a href="${escUrl(a.url)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--white);text-decoration:none;line-height:1.4;font-weight:500">${esc(a.title)}</a>
-        <span style="font-size:8px;color:var(--muted);white-space:nowrap">${a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}</span>
+        ${a.description ? `<div style="font-size:9px;color:var(--muted2);margin-top:2px;line-height:1.4">${esc(a.description).substring(0,140)}${a.description.length > 140 ? '...' : ''}</div>` : ''}
+        <div style="font-size:8px;color:var(--muted);margin-top:3px">${esc(a.source?.name||'')} · ${a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + new Date(a.publishedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
       </div>
-      <div style="font-size:9px;color:var(--muted2);margin-top:2px">${esc(a.source?.name||'')} ${a.publishedAt ? '· '+new Date(a.publishedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
-    </div>`).join('') : `<div style="padding:12px;text-align:center;color:var(--muted2);font-size:10px">
+    </div>`).join('') + `</div>` : `<div style="padding:12px;text-align:center;color:var(--muted2);font-size:10px">
       ${EXT_KEYS.NEWS ? 'No Fed-related headlines found. Will update on next news refresh.' : 'Add NewsAPI key (⚙ KEYS) for live Fed commentary headlines.'}
     </div>`}
   </div>`;
+}
 }
 
 // ── TAB: RATES ──
