@@ -1990,100 +1990,210 @@ async function fetchREStocks() {
 }
 
 // ── RE Stock Detail Fetcher (lazy-load on expand) ──
+// Uses Finnhub (free, CORS-native) + Yahoo page scrape fallback
 let RE_STOCKS_EXPANDED = new Set();
 async function fetchREStockDetail(sym) {
   if (RE_STOCK_DATA[sym]?.detail && Date.now() - RE_STOCK_DATA[sym].detail._ts < 1800000) return RE_STOCK_DATA[sym].detail;
-  const modules = 'price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,earningsHistory,earningsTrend,incomeStatementHistory,balanceSheetHistory';
-  const url = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary/' + encodeURIComponent(sym) + '?modules=' + modules;
-  const proxies = [
-    'https://corsproxy.io/?' + encodeURIComponent(url),
-    'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
-    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-  ];
-  for (const proxy of proxies) {
-    try {
-      const resp = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
-      if (!resp.ok) continue;
-      const text = await resp.text();
-      if (text.trim().startsWith('<')) continue;
-      const wrapper = JSON.parse(text);
-      const raw = wrapper.contents !== undefined ? wrapper.contents : JSON.stringify(wrapper);
-      if (typeof raw === 'string' && raw.trim().startsWith('<')) continue;
-      const j = typeof raw === 'string' ? JSON.parse(raw) : wrapper;
-      const r = j?.quoteSummary?.result?.[0];
-      if (!r) continue;
-      const p = r.price || {}, sd = r.summaryDetail || {}, ks = r.defaultKeyStatistics || {}, fd = r.financialData || {}, ap = r.assetProfile || {};
-      const detail = {
-        marketCap: p.marketCap?.raw || sd.marketCap?.raw || null,
-        trailingPE: sd.trailingPE?.raw || null,
-        forwardPE: sd.forwardPE?.raw || ks.forwardPE?.raw || null,
-        eps: ks.trailingEps?.raw || null,
-        dividendYield: sd.dividendYield?.raw || null,
-        dividendRate: sd.dividendRate?.raw || null,
-        beta: sd.beta?.raw || ks.beta?.raw || null,
-        priceToBook: sd.priceToBook?.raw || ks.priceToBook?.raw || null,
-        fiftyTwoWeekHigh: sd.fiftyTwoWeekHigh?.raw || null,
-        fiftyTwoWeekLow: sd.fiftyTwoWeekLow?.raw || null,
-        fiftyDayAvg: sd.fiftyDayAverage?.raw || null,
-        twoHundredDayAvg: sd.twoHundredDayAverage?.raw || null,
-        debtToEquity: fd.debtToEquity?.raw || null,
-        returnOnEquity: fd.returnOnEquity?.raw || null,
-        operatingMargins: fd.operatingMargins?.raw || null,
-        revenueGrowth: fd.revenueGrowth?.raw || null,
-        totalRevenue: fd.totalRevenue?.raw || null,
-        targetMeanPrice: fd.targetMeanPrice?.raw || null,
-        numberOfAnalysts: fd.numberOfAnalystOpinions?.raw || null,
-        earningsGrowth: ks.earningsQuarterlyGrowth?.raw || null,
-        enterpriseValue: ks.enterpriseValue?.raw || null,
-        profitMargins: ks.profitMargins?.raw || null,
-        bookValue: ks.bookValue?.raw || null,
-        sharesOutstanding: ks.sharesOutstanding?.raw || null,
-        sector: ap.sector || null,
-        industry: ap.industry || null,
-        employees: ap.fullTimeEmployees || null,
-        summary: ap.longBusinessSummary || null,
-        _ts: Date.now()
-      };
-        // Earnings history
-        const eh = r.earningsHistory?.history || [];
-        detail.earningsHistory = eh.slice(0,4).map(q => ({
-          date: q.quarter?.fmt || '',
-          epsActual: q.epsActual?.raw ?? null,
-          epsEstimate: q.epsEstimate?.raw ?? null,
-          surprise: q.epsSurprise?.raw ?? null,
-          surprisePct: q.epsSurprisePercent?.raw ?? null,
-        }));
-        // Earnings trend (forward estimates)
-        const et = r.earningsTrend?.trend || [];
-        detail.earningsTrend = et.slice(0,2).map(t => ({
-          period: t.period || '',
-          growth: t.growth?.raw ?? null,
-          epsAvg: t.earningsEstimate?.avg?.raw ?? null,
-          revAvg: t.revenueEstimate?.avg?.raw ?? null,
-        }));
-        // Recent quarterly revenue & net income
-        const isHist = r.incomeStatementHistory?.incomeStatementHistory || [];
-        detail.recentIncome = isHist.slice(0,2).map(q => ({
-          date: q.endDate?.fmt || '',
-          revenue: q.totalRevenue?.raw ?? null,
-          netIncome: q.netIncome?.raw ?? null,
-          grossProfit: q.grossProfit?.raw ?? null,
-        }));
-        // Balance sheet summary
+  if (!RE_STOCK_DATA[sym]) RE_STOCK_DATA[sym] = {};
+  const detail = { _ts: Date.now(), earningsHistory: [], earningsTrend: [], recentIncome: [] };
+
+  // ── SOURCE 1: Finnhub (primary — native CORS, no proxy needed) ──
+  const fhKey = EXT_KEYS.FINNHUB;
+  if (fhKey) {
+    const fhBase = 'https://finnhub.io/api/v1';
+    // Fetch metrics + profile + earnings in parallel
+    const [metricResp, profileResp, earningsResp, targetResp] = await Promise.allSettled([
+      fetch(fhBase + '/stock/metric?symbol=' + sym + '&metric=all&token=' + fhKey, {signal: AbortSignal.timeout(8000)}),
+      fetch(fhBase + '/stock/profile2?symbol=' + sym + '&token=' + fhKey, {signal: AbortSignal.timeout(8000)}),
+      fetch(fhBase + '/stock/earnings?symbol=' + sym + '&token=' + fhKey, {signal: AbortSignal.timeout(8000)}),
+      fetch(fhBase + '/stock/price-target?symbol=' + sym + '&token=' + fhKey, {signal: AbortSignal.timeout(8000)}),
+    ]);
+    // Parse metrics
+    if (metricResp.status === 'fulfilled' && metricResp.value.ok) {
+      try {
+        const mj = await metricResp.value.json();
+        const m = mj.metric || {};
+        detail.marketCap = m.marketCapitalization ? m.marketCapitalization * 1e6 : null;
+        detail.trailingPE = m.peTTM ?? m.peBasicExclExtraTTM ?? null;
+        detail.forwardPE = m.peAnnual ?? null;
+        detail.eps = m.epsBasicExclExtraItemsTTM ?? m.epsTTM ?? null;
+        detail.dividendYield = m.dividendYieldIndicatedAnnual != null ? m.dividendYieldIndicatedAnnual / 100 : null;
+        detail.dividendRate = m.dividendPerShareAnnual ?? null;
+        detail.beta = m.beta ?? null;
+        detail.priceToBook = m.pbQuarterly ?? m.pbAnnual ?? null;
+        detail.bookValue = m.bookValuePerShareQuarterly ?? m.bookValuePerShareAnnual ?? null;
+        detail.fiftyTwoWeekHigh = m['52WeekHigh'] ?? null;
+        detail.fiftyTwoWeekLow = m['52WeekLow'] ?? null;
+        detail.fiftyDayAvg = m['10DayAverageTradingVolume'] ? null : null; // not directly available
+        detail.twoHundredDayAvg = null; // computed below from chart data if available
+        detail.returnOnEquity = m.roeTTM != null ? m.roeTTM / 100 : null;
+        detail.operatingMargins = m.operatingMarginTTM != null ? m.operatingMarginTTM / 100 : null;
+        detail.profitMargins = m.netProfitMarginTTM != null ? m.netProfitMarginTTM / 100 : null;
+        detail.totalRevenue = m.revenuePerShareTTM && m.marketCapitalization && detail.eps
+          ? null : null; // not directly available as total
+        detail.revenueGrowth = m.revenueGrowthQuarterlyYoy != null ? m.revenueGrowthQuarterlyYoy / 100 : null;
+        detail.earningsGrowth = m.epsGrowthQuarterlyYoy != null ? m.epsGrowthQuarterlyYoy / 100 : null;
+        detail.debtToEquity = m.totalDebt2totalEquityQuarterly ?? m.totalDebtToEquityQuarterly ?? null;
+        detail.enterpriseValue = m.enterpriseValue ? m.enterpriseValue * 1e6 : null;
+        detail.sharesOutstanding = m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null;
+        // Extra Finnhub metrics
+        detail.revenuePerShare = m.revenuePerShareTTM ?? null;
+        detail.currentRatio = m.currentRatioQuarterly ?? null;
+        detail.quickRatio = m.quickRatioQuarterly ?? null;
+        detail.roaTTM = m.roaTTM ?? null;
+        detail.netDebtToEBITDA = m['netDebt/totalDebt'] ?? null;
+        detail.dividendGrowth5Y = m.dividendGrowthRate5Y ?? null;
+        detail.epsGrowth5Y = m.epsGrowth5Y ?? null;
+        detail.revenueGrowth5Y = m.revenueGrowth5Y ?? null;
+      } catch(e) { console.warn('Finnhub metric parse error:', e); }
+    }
+    // Parse profile
+    if (profileResp.status === 'fulfilled' && profileResp.value.ok) {
+      try {
+        const pj = await profileResp.value.json();
+        detail.industry = pj.finnhubIndustry || null;
+        detail.summary = pj.name ? (pj.name + ' — ' + (pj.finnhubIndustry || '') + '. Exchange: ' + (pj.exchange || '') + '. IPO: ' + (pj.ipo || '')) : null;
+        detail.employees = pj.employeeTotal || null;
+        detail.sector = pj.finnhubIndustry || null;
+        detail.logo = pj.logo || null;
+        // Finnhub profile also has marketCap
+        if (!detail.marketCap && pj.marketCapitalization) detail.marketCap = pj.marketCapitalization * 1e6;
+        if (!detail.sharesOutstanding && pj.shareOutstanding) detail.sharesOutstanding = pj.shareOutstanding * 1e6;
+      } catch(e) { console.warn('Finnhub profile parse error:', e); }
+    }
+    // Parse earnings history
+    if (earningsResp.status === 'fulfilled' && earningsResp.value.ok) {
+      try {
+        const ej = await earningsResp.value.json();
+        if (Array.isArray(ej) && ej.length) {
+          detail.earningsHistory = ej.slice(-4).reverse().map(q => ({
+            date: q.period || '',
+            epsActual: q.actual ?? null,
+            epsEstimate: q.estimate ?? null,
+            surprise: q.actual != null && q.estimate != null ? q.actual - q.estimate : null,
+            surprisePct: q.surprisePercent != null ? q.surprisePercent / 100 : null,
+          }));
+        }
+      } catch(e) { console.warn('Finnhub earnings parse error:', e); }
+    }
+    // Parse analyst target
+    if (targetResp.status === 'fulfilled' && targetResp.value.ok) {
+      try {
+        const tj = await targetResp.value.json();
+        detail.targetMeanPrice = tj.targetMean ?? tj.targetMedian ?? null;
+        detail.targetHigh = tj.targetHigh ?? null;
+        detail.targetLow = tj.targetLow ?? null;
+        detail.numberOfAnalysts = tj.lastUpdated ? 1 : null; // Finnhub doesn't give count directly
+      } catch(e) { console.warn('Finnhub target parse error:', e); }
+    }
+  }
+
+  // ── SOURCE 2: Yahoo page scrape (fallback for missing fields) ──
+  // Only attempt if Finnhub didn't provide key fundamentals
+  if (!detail.marketCap || !detail.trailingPE) {
+    const pageUrl = 'https://finance.yahoo.com/quote/' + encodeURIComponent(sym) + '/';
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(pageUrl),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(pageUrl),
+    ];
+    for (const proxy of proxies) {
+      try {
+        const resp = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
+        if (!resp.ok) continue;
+        const html = await resp.text();
+        if (html.length < 50000) continue; // skip redirect/consent pages
+        // Find the script block with quoteSummary data
+        const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+        let match, targetScript;
+        while ((match = scriptRegex.exec(html)) !== null) {
+          if (match[1].length > 10000 && match[1].includes('quoteSummary') && match[1].includes('"body"')) {
+            targetScript = match[1]; break;
+          }
+        }
+        if (!targetScript) continue;
+        const bodyMatch = targetScript.match(/"body":"(.*?)(?:","headers"|"\}$)/s);
+        if (!bodyMatch) continue;
+        const parsed = JSON.parse('"' + bodyMatch[1] + '"');
+        const data = JSON.parse(parsed);
+        const r = data?.quoteSummary?.result?.[0];
+        if (!r) continue;
+        const sd = r.summaryDetail || {}, ks = r.defaultKeyStatistics || {}, fd = r.financialData || {}, ap = r.assetProfile || {};
+        // Fill in missing fields only
+        if (!detail.marketCap) detail.marketCap = sd.marketCap?.raw ?? null;
+        if (!detail.trailingPE) detail.trailingPE = sd.trailingPE?.raw ?? null;
+        if (!detail.forwardPE) detail.forwardPE = sd.forwardPE?.raw ?? ks.forwardPE?.raw ?? null;
+        if (!detail.eps) detail.eps = ks.trailingEps?.raw ?? null;
+        if (!detail.dividendYield) detail.dividendYield = sd.dividendYield?.raw ?? null;
+        if (!detail.dividendRate) detail.dividendRate = sd.dividendRate?.raw ?? null;
+        if (!detail.beta) detail.beta = sd.beta?.raw ?? ks.beta?.raw ?? null;
+        if (!detail.priceToBook) detail.priceToBook = ks.priceToBook?.raw ?? null;
+        if (!detail.bookValue) detail.bookValue = ks.bookValue?.raw ?? null;
+        if (!detail.fiftyDayAvg) detail.fiftyDayAvg = sd.fiftyDayAverage?.raw ?? null;
+        if (!detail.twoHundredDayAvg) detail.twoHundredDayAvg = sd.twoHundredDayAverage?.raw ?? null;
+        if (!detail.returnOnEquity) detail.returnOnEquity = fd.returnOnEquity?.raw ?? null;
+        if (!detail.operatingMargins) detail.operatingMargins = fd.operatingMargins?.raw ?? null;
+        if (!detail.profitMargins) detail.profitMargins = ks.profitMargins?.raw ?? null;
+        if (!detail.totalRevenue) detail.totalRevenue = fd.totalRevenue?.raw ?? null;
+        if (!detail.targetMeanPrice) detail.targetMeanPrice = fd.targetMeanPrice?.raw ?? null;
+        if (!detail.numberOfAnalysts) detail.numberOfAnalysts = fd.numberOfAnalystOpinions?.raw ?? null;
+        if (!detail.debtToEquity) detail.debtToEquity = fd.debtToEquity?.raw ?? null;
+        if (!detail.revenueGrowth) detail.revenueGrowth = fd.revenueGrowth?.raw ?? null;
+        if (!detail.enterpriseValue) detail.enterpriseValue = ks.enterpriseValue?.raw ?? null;
+        if (!detail.sharesOutstanding) detail.sharesOutstanding = ks.sharesOutstanding?.raw ?? null;
+        if (!detail.industry) detail.industry = ap.industry ?? null;
+        if (!detail.summary) detail.summary = ap.longBusinessSummary ?? null;
+        if (!detail.employees) detail.employees = ap.fullTimeEmployees ?? null;
+        if (!detail.sector) detail.sector = ap.sector ?? null;
+        // Earnings history from Yahoo
+        if (!detail.earningsHistory.length) {
+          const eh = r.earningsHistory?.history || [];
+          detail.earningsHistory = eh.slice(0,4).map(q => ({
+            date: q.quarter?.fmt || '', epsActual: q.epsActual?.raw ?? null,
+            epsEstimate: q.epsEstimate?.raw ?? null, surprise: q.epsSurprise?.raw ?? null,
+            surprisePct: q.epsSurprisePercent?.raw ?? null,
+          }));
+        }
+        // Earnings trend from Yahoo
+        if (!detail.earningsTrend.length) {
+          const et = r.earningsTrend?.trend || [];
+          detail.earningsTrend = et.slice(0,2).map(t => ({
+            period: t.period || '', growth: t.growth?.raw ?? null,
+            epsAvg: t.earningsEstimate?.avg?.raw ?? null, revAvg: t.revenueEstimate?.avg?.raw ?? null,
+          }));
+        }
+        // Income statement from Yahoo
+        if (!detail.recentIncome.length) {
+          const isHist = r.incomeStatementHistory?.incomeStatementHistory || [];
+          detail.recentIncome = isHist.slice(0,2).map(q => ({
+            date: q.endDate?.fmt || '', revenue: q.totalRevenue?.raw ?? null,
+            netIncome: q.netIncome?.raw ?? null, grossProfit: q.grossProfit?.raw ?? null,
+          }));
+        }
+        // Balance sheet from Yahoo
         const bsHist = r.balanceSheetHistory?.balanceSheetStatements || [];
-        if (bsHist.length) {
+        if (bsHist.length && !detail.totalAssets) {
           const bs = bsHist[0];
           detail.totalAssets = bs.totalAssets?.raw ?? null;
           detail.totalLiabilities = bs.totalLiab?.raw ?? null;
           detail.totalDebt = bs.longTermDebt?.raw ?? null;
           detail.cash = bs.cash?.raw ?? null;
         }
-      if (!RE_STOCK_DATA[sym]) RE_STOCK_DATA[sym] = {};
-      RE_STOCK_DATA[sym].detail = detail;
-      return detail;
-    } catch(e) { continue; }
+        break; // success
+      } catch(e) { continue; }
+    }
   }
-  return null;
+
+  // ── SOURCE 3: Fill 50/200 DMA from Yahoo chart data if missing ──
+  const cd = RE_STOCK_DATA[sym];
+  if (cd && cd.chartData && cd.chartData.length >= 2) {
+    if (!detail.fiftyDayAvg && cd.chartData.length >= 5) {
+      detail.fiftyDayAvg = cd.chartData.slice(-5).reduce((a,b) => a+b, 0) / Math.min(5, cd.chartData.length);
+    }
+  }
+
+  RE_STOCK_DATA[sym].detail = detail;
+  console.log('RE Stock detail loaded for', sym, '— fields:', Object.keys(detail).filter(k => detail[k] != null && k !== '_ts').length);
+  return detail;
 }
 
 // ══ FOREX SYMBOLS for Rates tab ══
